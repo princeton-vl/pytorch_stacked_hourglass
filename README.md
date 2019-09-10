@@ -47,9 +47,9 @@ The option "-m n" will automatically stop training after n total iterations (if 
 
 #### Pretrained Models
 
-An 8HG pretrained model is available [here](https://crockwell.github.io/models/hg_8/checkpoint.pth.tar). It should yield validation accuracy of 0.901.
+An 8HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_8hg/checkpoint.pth.tar). It should yield validation accuracy of 0.901.
 
-A 2HG pretrained model is available [here](https://crockwell.github.io/models/hg_2/checkpoint.pth.tar). It should yield validation accuracy of 0.885.
+A 2HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_2hg/checkpoint.pth.tar). It should yield validation accuracy of 0.885.
 
 Models should be formatted as exp/<exp_name>/checkpoint.pth.tar
 
