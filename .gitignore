@@ -1,0 +1,13 @@
+exp
+*.pyc
+*__pycache__*
+*core.*
+*.jpg
+*.png
+*.pkl
+*.txt
+*.json
+_ext
+tmp
+*.o*
+*~
