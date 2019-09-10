@@ -53,6 +53,8 @@ A 2HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/
 
 Models should be formatted as exp/<exp_name>/checkpoint.pth.tar
 
+Note models were trained using batch size of 16 along with Adam optimizer with LR of 1e-3 (instead of RMSProp at 2.5e-4), as they outperformed in validation. Code can easily be modified to use original paper settings. The original paper reported validation accuracy of 0.881, which this code approximately replicated. Above results also were trained for approximately 200k iters, while the original paper trained for less.
+
 #### Training/Validation split
 
 The train/val split is same as that found in authors' [implementation](https://github.com/princeton-vl/pose-hg-train)
