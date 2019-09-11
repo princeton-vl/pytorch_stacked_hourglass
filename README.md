@@ -14,7 +14,7 @@ Requirements:
 - Python 3 (code has been tested on Python 3.6)
 - PyTorch (code tested with 0.4)
 - CUDA and cuDNN
-- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py
+- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py, scipy (tested with 1.1.0)
 
 Structure:
 - ```data/```: data loading and data augmentation code
