@@ -61,4 +61,4 @@ The train/val split is same as that found in authors' [implementation](https://g
 
 #### Note
 
-During training, occasionaly "ConnectionResetError" warning was displayed between epochs, but did not affect training.  
+During training, occasionaly "ConnectionResetError" warning was occasionally displayed between epochs, but did not affect training.  
