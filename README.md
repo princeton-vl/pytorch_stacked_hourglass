@@ -14,7 +14,7 @@ Requirements:
 - Python 3 (code has been tested on Python 3.6)
 - PyTorch (code tested with 0.4)
 - CUDA and cuDNN
-- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py
+- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py, scipy (tested with 1.1.0)
 
 Structure:
 - ```data/```: data loading and data augmentation code
@@ -47,12 +47,18 @@ The option "-m n" will automatically stop training after n total iterations (if 
 
 #### Pretrained Models
 
-An 8HG pretrained model is available [here](https://crockwell.github.io/models/hg_8/checkpoint.pth.tar). It should yield validation accuracy of 0.901.
+An 8HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_8hg/checkpoint.pth.tar). It should yield validation accuracy of 0.901.
 
-A 2HG pretrained model is available [here](https://crockwell.github.io/models/hg_2/checkpoint.pth.tar). It should yield validation accuracy of 0.885.
+A 2HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_2hg/checkpoint.pth.tar). It should yield validation accuracy of 0.885.
 
 Models should be formatted as exp/<exp_name>/checkpoint.pth.tar
+
+Note models were trained using batch size of 16 along with Adam optimizer with LR of 1e-3 (instead of RMSProp at 2.5e-4), as they outperformed in validation. Code can easily be modified to use original paper settings. The original paper reported validation accuracy of 0.881, which this code approximately replicated. Above results also were trained for approximately 200k iters, while the original paper trained for less.
 
 #### Training/Validation split
 
 The train/val split is same as that found in authors' [implementation](https://github.com/princeton-vl/pose-hg-train)
+
+#### Note
+
+During training, occasionaly "ConnectionResetError" warning was occasionally displayed between epochs, but did not affect training.  
