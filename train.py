@@ -30,7 +30,7 @@ def reload(config):
 
     if opt.continue_exp:
         resume = os.path.join('exp', opt.continue_exp)
-        resume_file = os.path.join(resume, 'checkpoint.pth.tar')
+        resume_file = os.path.join(resume, 'checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume_file)
@@ -47,7 +47,7 @@ def reload(config):
     if 'epoch' not in config['train']:
         config['train']['epoch'] = 0
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """
     from pytorch/examples
     """
@@ -56,13 +56,13 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
         os.makedirs(basename)
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'model_best.pth.tar')
+        shutil.copyfile(filename, 'model_best.pt')
 
 def save(config):
     resume = os.path.join('exp', config['opt'].exp)
     if config['opt'].exp=='pose' and config['opt'].continue_exp is not None:
         resume = os.path.join('exp', config['opt'].continue_exp)
-    resume_file = os.path.join(resume, 'checkpoint.pth.tar')
+    resume_file = os.path.join(resume, 'checkpoint.pt')
 
     save_checkpoint({
             'state_dict': config['inference']['net'].state_dict(),
