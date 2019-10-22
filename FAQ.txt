@@ -1,0 +1,18 @@
+Q: What exactly are the differences in parameters between this code and the Stacked Hourglass paper?
+A: The paper uses batch size of 8 instead of 16, and RMSprop with learning rate 2.5e-4 instead of 
+Adam with learning rate of 1e-3. Also they decayed learning rate "after validation accuracy plateaued"
+instead of explicity at 100k iterations, but this is more or less the same idea. 
+You can change Adam to RMSProp in "make_network" function within task/pose.py, 
+while learning rate and batch size are in __config__ in task/pose.py.
+
+Q: Were scores on 2HG model achieved using same parameters as 8HG?
+A: Yes, just change nstack to 2 in task/pose.py __config__
+
+Q: How do I interpret the output of the log file?
+A: Each iteration during training or validation outputs a line to this file with corresponding loss.
+Note, we do not calculate train or validation accuracy during training as this operation requires
+preprocessing and is expensive. Validation loss can be used as a proxy for when to stop training.
+
+Q: Only one model is saved during training?
+A: Yes - the most recent model is saved each epoch. You may want to modify if you desire to 
+save "best" checkpoint, etc.
