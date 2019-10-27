@@ -16,3 +16,9 @@ preprocessing and is expensive. Validation loss can be used as a proxy for when 
 Q: Only one model is saved during training?
 A: Yes - the most recent model is saved each epoch. You may want to modify if you desire to 
 save "best" checkpoint, etc.
+
+Q: How can I display predictions?
+A: There isn't explicit visualization code here, but you can change pixels of the image 
+corresponding to keypoints to visualize. To do this, for example, you could 
+modify mpii_eval function in test.py to take in images as well as keypoints and write 
+this to tensorboard.
