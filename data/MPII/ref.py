@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
-from scipy.misc import imread
-import os 
+from imageio import imread
+import os
 import time
 
 def _isArrayLike(obj):

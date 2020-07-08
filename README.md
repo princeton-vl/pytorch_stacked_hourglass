@@ -11,10 +11,10 @@ This repository provides everything necessary to train and evaluate a single-per
 
 Requirements:
 
-- Python 3 (code has been tested on Python 3.6)
-- PyTorch (code tested with 1.0)
-- CUDA and cuDNN
-- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py, scipy (tested with 1.1.0)
+- Python 3 (code has been tested on Python 3.8.2)
+- PyTorch (code tested with 1.5)
+- CUDA and cuDNN (tested with Cuda 10)
+- Python packages (not exhaustive): opencv-python (tested with 4.2), tqdm, cffi, h5py, scipy (tested with 1.4.1), imageio
 
 Structure:
 - ```data/```: data loading and data augmentation code
