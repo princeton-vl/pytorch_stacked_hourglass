@@ -90,7 +90,7 @@ def setup_val_split():
 def get_img(idx):
     imgname, __, __, __, __, __ = mpii.getAnnots(idx)
     path = os.path.join(img_dir, imgname)
-    img = imread(path, mode='RGB')
+    img = imread(path)
     return img
 
 def get_path(idx):
