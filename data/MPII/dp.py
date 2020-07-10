@@ -150,7 +150,12 @@ def init(config):
         batchnum = config['train']['{}_iters'.format(phase)]
         loader = loaders[phase].__iter__()
         for i in range(batchnum):
-            imgs, heatmaps = next(loader)
+            try:
+                imgs, heatmaps = next(loader)
+            except StopIteration:
+                # to avoid no data provided by dataloader
+                loader = loaders[phase].__iter__()
+                imgs, heatmaps = next(loader)
             yield {
                 'imgs': imgs, #cropped and augmented
                 'heatmaps': heatmaps, #based on keypoints. 0 if not in img for joint
