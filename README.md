@@ -11,10 +11,10 @@ This repository provides everything necessary to train and evaluate a single-per
 
 Requirements:
 
-- Python 3 (code has been tested on Python 3.6)
-- PyTorch (code tested with 1.0)
-- CUDA and cuDNN
-- Python packages (not exhaustive): opencv-python, tqdm, cffi, h5py, scipy (tested with 1.1.0)
+- Python 3 (code has been tested on Python 3.8.2)
+- PyTorch (code tested with 1.5)
+- CUDA and cuDNN (tested with Cuda 10)
+- Python packages (not exhaustive): opencv-python (tested with 4.2), tqdm, cffi, h5py, scipy (tested with 1.4.1), pytz, imageio
 
 Structure:
 - ```data/```: data loading and data augmentation code
@@ -47,9 +47,9 @@ The option "-m n" will automatically stop training after n total iterations (if 
 
 #### Pretrained Models
 
-An 8HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_8hg/checkpoint.pt). It should yield validation accuracy of 0.901.
+An 8HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_8hg/checkpoint.pt). It should yield validation accuracy of 0.902.
 
-A 2HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_2hg/checkpoint.pt). It should yield validation accuracy of 0.885.
+A 2HG pretrained model is available [here](http://www-personal.umich.edu/~cnris/original_2hg/checkpoint.pt). It should yield validation accuracy of 0.883.
 
 Models should be formatted as exp/<exp_name>/checkpoint.pt
 

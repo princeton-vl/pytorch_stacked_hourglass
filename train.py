@@ -12,6 +12,8 @@ import argparse
 from datetime import datetime
 from pytz import timezone
 
+import shutil
+
 def parse_command_line():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--continue_exp', type=str, help='continue exp')
