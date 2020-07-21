@@ -22,7 +22,9 @@ class HeatmapParser:
         return det
 
     def calc(self, det):
-        det = torch.autograd.Variable(torch.Tensor(det), volatile=True)
+        with torch.no_grad():
+            det = torch.autograd.Variable(torch.Tensor(det))
+            # This is a better format for future version pytorch
 
         det = self.nms(det)
         h = det.size()[2]
