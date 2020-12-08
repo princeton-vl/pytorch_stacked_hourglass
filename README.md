@@ -1,9 +1,9 @@
 # Stacked Hourglass Networks in Pytorch
 
-Based on **Stacked Hourglass Networks for Human Pose Estimation.** [Alejandro Newell](http://www-personal.umich.edu/~alnewell/), Kaiyu Yang, and [Jia Deng](https://www.cs.princeton.edu/~jiadeng/). *European Conference on Computer Vision (ECCV)*, 2016. [Github](https://github.com/princeton-vl/pose-hg-train)
+Based on **Stacked Hourglass Networks for Human Pose Estimation.** [Alejandro Newell](https://www.alejandronewell.com/), [Kaiyu Yang](https://www.cs.princeton.edu/~kaiyuy/), and [Jia Deng](https://www.cs.princeton.edu/~jiadeng/). *European Conference on Computer Vision (ECCV)*, 2016. [Github](https://github.com/princeton-vl/pose-hg-train)
 
-PyTorch code also adopted from: **Associative Embedding: End-to-end Learning for Joint Detection and Grouping.**
-[Alejandro Newell](http://www-personal.umich.edu/~alnewell/), Zhiao Huang, and [Jia Deng](https://www.cs.princeton.edu/~jiadeng/). *Neural Information Processing Systems (NeurIPS)*, 2017. [Github](https://github.com/princeton-vl/pose-ae-train)
+PyTorch code by [Chris Rockwell](https://crockwell.github.io/); adopted from: **Associative Embedding: End-to-end Learning for Joint Detection and Grouping.**
+[Alejandro Newell](http://www-personal.umich.edu/~alnewell/), [Zhiao Huang](https://sites.google.com/view/zhiao-huang), and [Jia Deng](https://www.cs.princeton.edu/~jiadeng/). *Neural Information Processing Systems (NeurIPS)*, 2017. [Github](https://github.com/princeton-vl/pose-ae-train)
 
 ## Getting Started
 
