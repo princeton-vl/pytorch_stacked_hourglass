@@ -106,6 +106,13 @@ def make_network(configs):
 
         net = net.train()
 
+        # When in validation phase put batchnorm layers in eval mode
+        # to prevent running stats from getting updated.
+        if phase == 'valid':
+            for module in net.modules():
+                if isinstance(module, nn.BatchNorm2d):
+                    module.eval()
+
         if phase != 'inference':
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
             num_loss = len(config['train']['loss'])
