@@ -13,7 +13,7 @@ __config__ = {
     'data_provider': 'data.MPII.dp',
     'network': 'models.posenet.PoseNet',
     'inference': {
-        'nstack': 8,
+        'nstack': 2,
         'inp_dim': 256,
         'oup_dim': 12,
         'num_parts': 16,
