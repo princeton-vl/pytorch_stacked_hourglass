@@ -37,6 +37,7 @@ def reload(config):
             print("=> loading pretrained model '{}'".format(opt.pretrained_model))
             checkpoint = torch.load(opt.pretrained_model)
             # remove 'model.' prefix from state_dict keys
+            print(f"layer {k}" for k,_ in checkpoint['state_dict'].items())
             state_dict = {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items()}
             config['inference']['net'].load_state_dict(state_dict)
         else:
