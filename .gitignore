@@ -11,4 +11,4 @@ tmp
 *.o*
 *~
 data/VHS-Top-5286-Eric/*
-exp/point_localization_001/checkpoint.pt
+exp
