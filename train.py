@@ -36,7 +36,9 @@ def reload(config):
         if os.path.isfile(opt.pretrained_model):
             print("=> loading pretrained model '{}'".format(opt.pretrained_model))
             checkpoint = torch.load(opt.pretrained_model)
-            config['inference']['net'].load_state_dict(checkpoint['state_dict'])
+            # remove 'model.' prefix from state_dict keys
+            state_dict = {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items()}
+            config['inference']['net'].load_state_dict(state_dict)
         else:
             print("=> no pretrained model found at '{}'".format(opt.pretrained_model))
             exit(0)
