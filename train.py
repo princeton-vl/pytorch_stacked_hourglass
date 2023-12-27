@@ -19,25 +19,33 @@ def parse_command_line():
     parser.add_argument('-c', '--continue_exp', type=str, help='continue exp')
     parser.add_argument('-e', '--exp', type=str, default='pose', help='experiments name')
     parser.add_argument('-m', '--max_iters', type=int, default=250, help='max number of iterations (thousands)')
+    parser.add_argument('-p', '--pretrained_model', type=str, help='path to pretrained model')
     args = parser.parse_args()
     return args
 
 def reload(config):
     """
-    load or initialize model's parameters by config from config['opt'].continue_exp
-    config['train']['epoch'] records the epoch num
-    config['inference']['net'] is the model
+    Load or initialize model's parameters by config from config['opt'].continue_exp
+    or from a specified pretrained model file.
+    config['train']['epoch'] records the epoch num.
+    config['inference']['net'] is the model.
     """
     opt = config['opt']
 
-    if opt.continue_exp:
+    if opt.pretrained_model:  # Check if pretrained model path is provided
+        if os.path.isfile(opt.pretrained_model):
+            print("=> loading pretrained model '{}'".format(opt.pretrained_model))
+            checkpoint = torch.load(opt.pretrained_model)
+            config['inference']['net'].load_state_dict(checkpoint['state_dict'])
+        else:
+            print("=> no pretrained model found at '{}'".format(opt.pretrained_model))
+            exit(0)
+    elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
         resume = os.path.join('exp', opt.continue_exp)
-        # eric changed from checkpoint to pose_checkpoint
         resume_file = os.path.join(resume, 'pose_checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume_file)
-
             config['inference']['net'].load_state_dict(checkpoint['state_dict'])
             config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
             config['train']['epoch'] = checkpoint['epoch']
@@ -50,33 +58,28 @@ def reload(config):
     if 'epoch' not in config['train']:
         config['train']['epoch'] = 0
 
+
 def make_finetunable(func, config):
     # instantiate Modified PoseNet
     ModifiedPoseNet = importNet('models.modified_posenet.ModifiedPoseNet')  # Ensure this path matches your modified model's location
     modified_pose_net = ModifiedPoseNet(**config['inference'])
-
     # load Pre-trained Weights
     original_pose_net = config['inference']['net']
     state_dict_original = original_pose_net.state_dict()
     state_dict_modified = modified_pose_net.state_dict()
-
     # copy weights for layers that exist in both models
     for name, param in state_dict_original.items():
         if name in state_dict_modified and param.size() == state_dict_modified[name].size():
             state_dict_modified[name].copy_(param)
-
     # Step 3: Unfreeze Selected Layers
     # Assuming you've added or modified layers named with a specific prefix, e.g., "new_layer"
     for name, param in modified_pose_net.named_parameters():
         if "new_layer" in name:
             param.requires_grad = True
-
     # Step 4: Update Config
     config['inference']['net'] = modified_pose_net
-
     # Step 5: Reinitialize the Optimizer
     config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, modified_pose_net.parameters()), config['train']['learning_rate'])
-
     # Step 6: Return Updated Function and Config
     return func, config
 
