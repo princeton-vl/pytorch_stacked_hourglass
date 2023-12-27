@@ -65,3 +65,15 @@ class PoseNet(nn.Module):
             combined_loss.append(self.heatmapLoss(combined_hm_preds[0][:,i], heatmaps))
         combined_loss = torch.stack(combined_loss, dim=1)
         return combined_loss
+
+# eric added
+class ModifiedPoseNet(PoseNet):
+    def __init__(self, nstack, inp_dim, oup_dim, bn=False, increase=0, **kwargs):
+        # Initialize the base PoseNet with the same parameters
+        super(ModifiedPoseNet, self).__init__(nstack, inp_dim, oup_dim, bn, increase, **kwargs)
+
+        # Modify or add layers as required for your task
+        # Example: Replace the last output layer to change the number of features
+        self.outs = nn.ModuleList([Conv(inp_dim, 12, 1, relu=False, bn=False) if i == nstack - 1 else self.outs[i] for i in range(nstack)])
+
+    # Optionally override other methods if needed

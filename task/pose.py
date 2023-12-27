@@ -15,7 +15,7 @@ __config__ = {
     'inference': {
         'nstack': 8,
         'inp_dim': 256,
-        'oup_dim': 16,
+        'oup_dim': 12,
         'num_parts': 16,
         'increase': 0,
         'keys': ['imgs'],
@@ -81,7 +81,9 @@ def make_network(configs):
     ## creating new posenet
     PoseNet = importNet(configs['network'])
     poseNet = PoseNet(**config)
-    forward_net = DataParallel(poseNet.cuda())
+    forward_net = poseNet.cuda()
+    if torch.cuda.device_count() > 1:
+        forward_net = DataParallel(forward_net)
     config['net'] = Trainer(forward_net, configs['inference']['keys'], calc_loss)
     
     ## optimizer, experiment setup

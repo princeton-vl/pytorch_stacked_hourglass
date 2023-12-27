@@ -32,7 +32,8 @@ def reload(config):
 
     if opt.continue_exp:
         resume = os.path.join('exp', opt.continue_exp)
-        resume_file = os.path.join(resume, 'checkpoint.pt')
+        # eric changed from checkpoint to pose_checkpoint
+        resume_file = os.path.join(resume, 'pose_checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume_file)
@@ -48,6 +49,37 @@ def reload(config):
 
     if 'epoch' not in config['train']:
         config['train']['epoch'] = 0
+
+def make_finetunable(func, config):
+    # instantiate Modified PoseNet
+    ModifiedPoseNet = importNet('models.modified_posenet.ModifiedPoseNet')  # Ensure this path matches your modified model's location
+    modified_pose_net = ModifiedPoseNet(**config['inference'])
+
+    # load Pre-trained Weights
+    original_pose_net = config['inference']['net']
+    state_dict_original = original_pose_net.state_dict()
+    state_dict_modified = modified_pose_net.state_dict()
+
+    # copy weights for layers that exist in both models
+    for name, param in state_dict_original.items():
+        if name in state_dict_modified and param.size() == state_dict_modified[name].size():
+            state_dict_modified[name].copy_(param)
+
+    # Step 3: Unfreeze Selected Layers
+    # Assuming you've added or modified layers named with a specific prefix, e.g., "new_layer"
+    for name, param in modified_pose_net.named_parameters():
+        if "new_layer" in name:
+            param.requires_grad = True
+
+    # Step 4: Update Config
+    config['inference']['net'] = modified_pose_net
+
+    # Step 5: Reinitialize the Optimizer
+    config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, modified_pose_net.parameters()), config['train']['learning_rate'])
+
+    # Step 6: Return Updated Function and Config
+    return func, config
+
 
 def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """
@@ -117,13 +149,18 @@ def init():
 
     func = task.make_network(config)
     reload(config)
+    
+    for name, param in config['inference']['net'].named_parameters():
+        print(name, param.size())
+
+    #finetune_func, finetune_config = make_finetunable(func, config)
     return func, config
 
 def main():
     func, config = init()
-    data_func = config['data_provider'].init(config)
-    train(func, data_func, config)
-    print(datetime.now(timezone('EST')))
+    # data_func = config['data_provider'].init(config)
+    # train(func, data_func, config)
+    print(datetime.now(timezone('PST')))
 
 if __name__ == '__main__':
     main()
