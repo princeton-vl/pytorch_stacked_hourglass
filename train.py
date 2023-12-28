@@ -118,7 +118,7 @@ def train(train_func, train_loader, valid_loader, config, post_epoch=None):
 
 def init():
     opt = parse_command_line()
-    task = importlib.import_module('task.heart')
+    task = importlib.import_module('task.pose')
     exp_path = os.path.join('exp', opt.exp)
     
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
@@ -133,7 +133,7 @@ def init():
     reload(config)
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
-    test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
+    test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
     output_res = 256  # Example resolution
     # Initialize your CoordinateDataset and DataLoader here
     train_dataset = CoordinateDataset(root_dir=train_dir, output_res=output_res, augment=True)
