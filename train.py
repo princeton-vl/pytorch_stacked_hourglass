@@ -40,7 +40,7 @@ def reload(config):
             state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
             config['inference']['net'].load_state_dict(state_dict, strict=False)
             ### eric: finetuneable last layer ###
-            config['inference']['net'].outs[-1] = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            config['inference']['net'].model.outs[-1] = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
             # freeze all but outs layers
             for name, param in config['inference']['net'].named_parameters():
                 if 'outs' not in name:
@@ -134,13 +134,14 @@ def init():
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
-    output_res = 256  # Example resolution
+    heatmap_res = config['inference']['output_res']
     # Initialize your CoordinateDataset and DataLoader here
-    train_dataset = CoordinateDataset(root_dir=train_dir, output_res=output_res, augment=True)
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
+    im_sz = config['inference']['inp_dim']
+    train_dataset = CoordinateDataset(root_dir=train_dir, im_sz=im_sz, output_res=heatmap_res, augment=True)
+    train_loader = DataLoader(train_dataset, batch_size=config['train']['batch_size'], shuffle=True, num_workers=4)
 
-    valid_dataset = CoordinateDataset(root_dir=test_dir, output_res=256, augment=False)
-    valid_loader = DataLoader(valid_dataset, batch_size=64, shuffle=False, num_workers=4)
+    valid_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, output_res=heatmap_res, augment=False)
+    valid_loader = DataLoader(valid_dataset, batch_size=config['train']['batch_size'], shuffle=False, num_workers=4)
 
     return func, train_loader, valid_loader, config
 

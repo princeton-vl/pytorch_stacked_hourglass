@@ -36,6 +36,7 @@ class CoordinateDataset(Dataset):
 
         image_tensor = transforms.Compose([
             transforms.Resize((self.output_res, self.output_res)),
+            transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
         ])(image)
 
