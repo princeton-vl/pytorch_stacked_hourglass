@@ -132,11 +132,14 @@ def init():
     func = task.make_network(config)
     reload(config)
 
+    train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
+    test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
+    output_res = 256  # Example resolution
     # Initialize your CoordinateDataset and DataLoader here
-    train_dataset = CoordinateDataset(root_dir='path/to/train_dir', output_res=256, augment=True)
+    train_dataset = CoordinateDataset(root_dir=train_dir, output_res=output_res, augment=True)
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
 
-    valid_dataset = CoordinateDataset(root_dir='path/to/valid_dir', output_res=256, augment=False)
+    valid_dataset = CoordinateDataset(root_dir=test_dir, output_res=256, augment=False)
     valid_loader = DataLoader(valid_dataset, batch_size=64, shuffle=False, num_workers=4)
 
     return func, train_loader, valid_loader, config
