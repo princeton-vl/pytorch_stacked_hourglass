@@ -35,34 +35,34 @@ def reload(config):
 
     if opt.pretrained_model:  # Check if pretrained model path is provided
         if os.path.isfile(opt.pretrained_model):
-            print("=> loading pretrained model '{}'".format(opt.pretrained_model))
-            checkpoint = torch.load(opt.pretrained_model)
-            # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
-            # config['inference']['net'].load_state_dict(state_dict)
-            state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
-            config['inference']['net'].load_state_dict(state_dict, strict=False)
-            ### eric: finetuneable last layer ###
-            new_layer0 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
-            new_layer1 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            # print("=> loading pretrained model '{}'".format(opt.pretrained_model))
+            # checkpoint = torch.load(opt.pretrained_model)
+            # # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
+            # # config['inference']['net'].load_state_dict(state_dict)
+            # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
+            # config['inference']['net'].load_state_dict(state_dict, strict=False)
+            # ### eric: finetuneable last layer ###
+            # new_layer0 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            # new_layer1 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
 
-            # Modify the second stack to accept an input dimension of 12
-            new_layer1_in = nn.Sequential(Hourglass(4, 12, bn=False, increase=0))  # Replace '12' with the correct input dimension
+            # # Modify the second stack to accept an input dimension of 12
+            # new_layer1_in = nn.Sequential(Hourglass(4, 12, bn=False, increase=0))  # Replace '12' with the correct input dimension
 
-            if torch.cuda.is_available():
-                new_layer0 = new_layer0.cuda()
-                new_layer1 = new_layer1.cuda()
-                new_layer1_in = new_layer1_in.cuda()
-            config['inference']['net'].model.outs[0] = new_layer0
-            config['inference']['net'].model.outs[1] = new_layer1
-            config['inference']['net'].model.hgs[1] = new_layer1_in
-            config['inference']['inp_dim'] = 12
-            # freeze all but outs layers
-            for name, param in config['inference']['net'].named_parameters():
-                if 'outs' not in name:
-                    param.requires_grad = False
-            for param in config['inference']['net'].model.hgs[1].parameters():
-                param.requires_grad = True
-            # Reinitialize the optimizer
+            # if torch.cuda.is_available():
+            #     new_layer0 = new_layer0.cuda()
+            #     new_layer1 = new_layer1.cuda()
+            #     new_layer1_in = new_layer1_in.cuda()
+            # config['inference']['net'].model.outs[0] = new_layer0
+            # config['inference']['net'].model.outs[1] = new_layer1
+            # config['inference']['net'].model.hgs[1] = new_layer1_in
+            # config['inference']['inp_dim'] = 12
+            # # freeze all but outs layers
+            # for name, param in config['inference']['net'].named_parameters():
+            #     if 'outs' not in name:
+            #         param.requires_grad = False
+            # for param in config['inference']['net'].model.hgs[1].parameters():
+            #     param.requires_grad = True
+            # # Reinitialize the optimizer
             config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['inference']['net'].parameters()), lr=config['train']['learning_rate'])
 
         else:
@@ -102,10 +102,10 @@ def save_checkpoint(state, is_best, filename='checkpoint.pt'):
 
 def save(config):
     resume = os.path.join('exp', config['opt'].exp)
-    if config['opt'].exp=='pose' and config['opt'].continue_exp is not None:
+    if config['opt'].continue_exp is not None:
         resume = os.path.join('exp', config['opt'].continue_exp)
     resume_file = os.path.join(resume, 'checkpoint.pt')
-
+    
     save_checkpoint({
             'state_dict': config['inference']['net'].state_dict(),
             'optimizer' : config['train']['optimizer'].state_dict(),

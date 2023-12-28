@@ -19,7 +19,7 @@ __config__ = {
         'num_parts': 6,
         'increase': 0,
         'keys': ['imgs'],
-        'num_eval': 2958, ## number of val examples used. entire set is 2958
+        'num_eval': 500, ## number of val examples used. entire set is 2958
         'train_num_eval': 300, ## number of train examples tested at test time
     },
 

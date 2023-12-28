@@ -9,6 +9,12 @@ import copy
 from utils.group import HeatmapParser
 import utils.img
 import data.MPII.ref as ds
+###
+import torch
+import tqdm
+import numpy as np
+from data.VHS.vhs_loader import CoordinateDataset
+from torch.utils.data import DataLoader
 
 parser = HeatmapParser()
 
