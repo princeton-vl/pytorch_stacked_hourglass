@@ -69,7 +69,10 @@ def reload(config):
             print("=> no pretrained model found at '{}'".format(opt.pretrained_model))
             exit(0)
     elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
-        resume = os.path.join('exp', opt.continue_exp)
+        #resume = os.path.join('exp', opt.continue_exp)
+        exp_path_gdrive = '/content/stacked_hourglass_point_localization/exp'
+        resume = os.path.join(exp_path_gdrive, opt.continue_exp)
+        resume=opt.continue_exp
         resume_file = os.path.join(resume, 'pose_checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
