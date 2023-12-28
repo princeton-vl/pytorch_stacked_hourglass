@@ -55,6 +55,7 @@ def reload(config):
             config['inference']['net'].model.outs[0] = new_layer0
             config['inference']['net'].model.outs[1] = new_layer1
             config['inference']['net'].model.hgs[1] = new_layer1_in
+            config['inference']['inp_dim'] = 12
             # freeze all but outs layers
             for name, param in config['inference']['net'].named_parameters():
                 if 'outs' not in name:
