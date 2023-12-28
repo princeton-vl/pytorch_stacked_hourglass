@@ -73,7 +73,7 @@ def reload(config):
         exp_path_gdrive = '/content/stacked_hourglass_point_localization/exp'
         resume = os.path.join(exp_path_gdrive, opt.continue_exp)
         resume=opt.continue_exp
-        resume_file = os.path.join(resume, 'pose_checkpoint.pt')
+        resume_file = os.path.join(resume, 'checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume_file)
