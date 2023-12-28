@@ -3,6 +3,7 @@ from os.path import dirname
 import tqdm
 import torch.backends.cudnn as cudnn
 import torch
+import torch.nn as nn
 import importlib
 import argparse
 from datetime import datetime
@@ -11,6 +12,7 @@ import shutil
 
 from data.VHS.vhs_loader import CoordinateDataset
 from torch.utils.data import DataLoader
+from models.layers import Hourglass
 
 def parse_command_line():
     parser = argparse.ArgumentParser()
@@ -42,15 +44,23 @@ def reload(config):
             ### eric: finetuneable last layer ###
             new_layer0 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
             new_layer1 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+
+            # Modify the second stack to accept an input dimension of 12
+            new_layer1_in = nn.Sequential(Hourglass(4, 12, bn=False, increase=0))  # Replace '12' with the correct input dimension
+
             if torch.cuda.is_available():
                 new_layer0 = new_layer0.cuda()
                 new_layer1 = new_layer1.cuda()
+                new_layer1_in = new_layer1_in.cuda()
             config['inference']['net'].model.outs[0] = new_layer0
-            config['inference']['net'].model.outs[-1] = new_layer1
+            config['inference']['net'].model.outs[1] = new_layer1
+            config['inference']['net'].model.hgs[1] = new_layer1_in
             # freeze all but outs layers
             for name, param in config['inference']['net'].named_parameters():
                 if 'outs' not in name:
                     param.requires_grad = False
+            for param in config['inference']['net'].model.hgs[1].parameters():
+                param.requires_grad = True
             # Reinitialize the optimizer
             config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['inference']['net'].parameters()), lr=config['train']['learning_rate'])
 
@@ -137,6 +147,7 @@ def init():
 
     func = task.make_network(config)
     reload(config)
+    config['train']
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
