@@ -40,7 +40,14 @@ def reload(config):
             state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
             config['inference']['net'].load_state_dict(state_dict, strict=False)
             ### eric: finetuneable last layer ###
-            config['inference']['net'].model.outs[-1] = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            new_layer = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            # Move the new layer to GPU if the rest of the model is on GPU
+            if next(config['inference']['net'].parameters()).is_cuda:
+                new_layer = new_layer.cuda()
+            config['inference']['net'].model.outs[-1] = new_layer
+            # dirty code to just move new layer to cuda
+            if next(config['inference']['net'].parameters()).is_cuda:
+                config['inference']['net'].model.outs[-1] = config['inference']['net'].model.outs[-1].cuda()
             # freeze all but outs layers
             for name, param in config['inference']['net'].named_parameters():
                 if 'outs' not in name:

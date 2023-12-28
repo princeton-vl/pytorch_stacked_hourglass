@@ -81,6 +81,7 @@ def make_network(configs):
     ## creating new posenet
     PoseNet = importNet(configs['network'])
     poseNet = PoseNet(**config)
+    poseNet = poseNet.cuda()
     forward_net = poseNet.cuda()
     if torch.cuda.device_count() > 1:
         forward_net = DataParallel(forward_net)
