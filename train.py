@@ -1,18 +1,16 @@
 import os
-import tqdm
 from os.path import dirname
-
+import tqdm
 import torch.backends.cudnn as cudnn
-cudnn.benchmark = True
-cudnn.enabled = True
-
 import torch
 import importlib
 import argparse
 from datetime import datetime
 from pytz import timezone
-
 import shutil
+
+from data.VHS.vhs_loader import CoordinateDataset
+from torch.utils.data import DataLoader
 
 def parse_command_line():
     parser = argparse.ArgumentParser()
@@ -23,6 +21,7 @@ def parse_command_line():
     args = parser.parse_args()
     return args
 
+### eric: FINETUNING HAPPENS IN HERE ###
 def reload(config):
     """
     Load or initialize model's parameters by config from config['opt'].continue_exp
@@ -36,57 +35,41 @@ def reload(config):
         if os.path.isfile(opt.pretrained_model):
             print("=> loading pretrained model '{}'".format(opt.pretrained_model))
             checkpoint = torch.load(opt.pretrained_model)
-            # remove 'model.' prefix from state_dict keys
-            print(f"layer {k}" for k,_ in checkpoint['state_dict'].items())
-            state_dict = {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items()}
-            config['inference']['net'].load_state_dict(state_dict)
+            # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
+            # config['inference']['net'].load_state_dict(state_dict)
+            state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
+            config['inference']['net'].load_state_dict(state_dict, strict=False)
+            ### eric: finetuneable last layer ###
+            config['inference']['net'].outs[-1] = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
+            # freeze all but outs layers
+            for name, param in config['inference']['net'].named_parameters():
+                if 'outs' not in name:
+                    param.requires_grad = False
+            # Reinitialize the optimizer
+            config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['inference']['net'].parameters()), lr=config['train']['learning_rate'])
+
         else:
             print("=> no pretrained model found at '{}'".format(opt.pretrained_model))
             exit(0)
     elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
         resume = os.path.join('exp', opt.continue_exp)
         resume_file = os.path.join(resume, 'pose_checkpoint.pt')
-        if os.path.isfile(resume_file):
-            print("=> loading checkpoint '{}'".format(resume))
-            checkpoint = torch.load(resume_file)
-            config['inference']['net'].load_state_dict(checkpoint['state_dict'])
-            config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
-            config['train']['epoch'] = checkpoint['epoch']
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(resume, checkpoint['epoch']))
-        else:
-            print("=> no checkpoint found at '{}'".format(resume))
-            exit(0)
+        # if os.path.isfile(resume_file):
+        #     print("=> loading checkpoint '{}'".format(resume))
+        #     checkpoint = torch.load(resume_file)
+        #     config['inference']['net'].load_state_dict(checkpoint['state_dict'])
+        #     config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
+        #     config['train']['epoch'] = checkpoint['epoch']
+        #     print("=> loaded checkpoint '{}' (epoch {})"
+        #           .format(resume, checkpoint['epoch']))
+        # else:
+        print("=> no checkpoint found at '{}'".format(resume))
+        exit(0)
 
     if 'epoch' not in config['train']:
         config['train']['epoch'] = 0
 
-
-def make_finetunable(func, config):
-    # instantiate Modified PoseNet
-    ModifiedPoseNet = importNet('models.modified_posenet.ModifiedPoseNet')  # Ensure this path matches your modified model's location
-    modified_pose_net = ModifiedPoseNet(**config['inference'])
-    # load Pre-trained Weights
-    original_pose_net = config['inference']['net']
-    state_dict_original = original_pose_net.state_dict()
-    state_dict_modified = modified_pose_net.state_dict()
-    # copy weights for layers that exist in both models
-    for name, param in state_dict_original.items():
-        if name in state_dict_modified and param.size() == state_dict_modified[name].size():
-            state_dict_modified[name].copy_(param)
-    # Step 3: Unfreeze Selected Layers
-    # Assuming you've added or modified layers named with a specific prefix, e.g., "new_layer"
-    for name, param in modified_pose_net.named_parameters():
-        if "new_layer" in name:
-            param.requires_grad = True
-    # Step 4: Update Config
-    config['inference']['net'] = modified_pose_net
-    # Step 5: Reinitialize the Optimizer
-    config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, modified_pose_net.parameters()), config['train']['learning_rate'])
-    # Step 6: Return Updated Function and Config
-    return func, config
-
-
+    
 def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """
     from pytorch/examples
@@ -111,41 +94,34 @@ def save(config):
         }, False, filename=resume_file)
     print('=> save checkpoint')
 
-def train(train_func, data_func, config, post_epoch=None):
+def train(train_func, train_loader, valid_loader, config, post_epoch=None):
     while True:
-        fails = 0
         print('epoch: ', config['train']['epoch'])
         if 'epoch_num' in config['train']:
             if config['train']['epoch'] > config['train']['epoch_num']:
                 break
 
         for phase in ['train', 'valid']:
-            num_step = config['train']['{}_iters'.format(phase)]
-            generator = data_func(phase)
+            loader = train_loader if phase == 'train' else valid_loader
+            num_step = len(loader)
             print('start', phase, config['opt'].exp)
 
-            show_range = range(num_step)
-            show_range = tqdm.tqdm(show_range, total = num_step, ascii=True)
-            batch_id = num_step * config['train']['epoch']
-            if batch_id > config['opt'].max_iters * 1000:
-                return
+            show_range = tqdm.tqdm(range(num_step), total=num_step, ascii=True)
             for i in show_range:
-                datas = next(generator)
-                outs = train_func(batch_id + i, config, phase, **datas)
+                images, heatmaps = next(iter(loader))
+                datas = {'imgs': images, 'heatmaps': heatmaps}
+                outs = train_func(i, config, phase, **datas)
+
         config['train']['epoch'] += 1
         save(config)
 
+
 def init():
-    """
-    task.__config__ contains the variables that control the training and testing
-    make_network builds a function which can do forward and backward propagation
-    """
     opt = parse_command_line()
-    task = importlib.import_module('task.pose')
+    task = importlib.import_module('task.heart')
     exp_path = os.path.join('exp', opt.exp)
     
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-
     config = task.__config__
     try: os.makedirs(exp_path)
     except FileExistsError: pass
@@ -155,17 +131,19 @@ def init():
 
     func = task.make_network(config)
     reload(config)
-    
-    for name, param in config['inference']['net'].named_parameters():
-        print(name, param.size())
 
-    #finetune_func, finetune_config = make_finetunable(func, config)
-    return func, config
+    # Initialize your CoordinateDataset and DataLoader here
+    train_dataset = CoordinateDataset(root_dir='path/to/train_dir', output_res=256, augment=True)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
+
+    valid_dataset = CoordinateDataset(root_dir='path/to/valid_dir', output_res=256, augment=False)
+    valid_loader = DataLoader(valid_dataset, batch_size=64, shuffle=False, num_workers=4)
+
+    return func, train_loader, valid_loader, config
 
 def main():
-    func, config = init()
-    # data_func = config['data_provider'].init(config)
-    # train(func, data_func, config)
+    func, train_loader, valid_loader, config = init()
+    train(func, train_loader, valid_loader, config)
     print(datetime.now(timezone('PST')))
 
 if __name__ == '__main__':

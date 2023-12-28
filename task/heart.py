@@ -11,11 +11,11 @@ from utils.misc import make_input, make_output, importNet
 
 __config__ = {
     'data_provider': 'data.MPII.dp',
-    'network': 'models.posenet.PoseNet',
+    'network': 'models.posenet.ModifiedPoseNet',
     'inference': {
         'nstack': 2,
         'inp_dim': 256,
-        'oup_dim': 16,
+        'oup_dim': 12,
         'num_parts': 16,
         'increase': 0,
         'keys': ['imgs'],
