@@ -135,7 +135,7 @@ def train(train_func, train_loader, valid_loader, config, post_epoch=None):
 
 def init():
     opt = parse_command_line()
-    task = importlib.import_module('task.pose')
+    task = importlib.import_module('task.heart')
     exp_path = os.path.join('exp', opt.exp)
     
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')

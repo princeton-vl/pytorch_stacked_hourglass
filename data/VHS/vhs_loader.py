@@ -46,7 +46,7 @@ class CoordinateDataset(Dataset):
         return image_tensor, heatmaps
 
     def generate_heatmaps(self, points, output_res):
-        num_keypoints = len(points) // 2
+        num_keypoints = len(points)
         heatmaps = np.zeros((num_keypoints, output_res, output_res), dtype=np.float32)
 
         for i in range(num_keypoints):
