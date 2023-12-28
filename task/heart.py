@@ -11,7 +11,7 @@ from utils.misc import make_input, make_output, importNet
 
 __config__ = {
     'data_provider': 'data.MPII.dp',
-    'network': 'models.posenet.ModifiedPoseNet',
+    'network': 'models.posenet.PoseNet',
     'inference': {
         'nstack': 2,
         'inp_dim': 256,
