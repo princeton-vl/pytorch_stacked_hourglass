@@ -13,8 +13,9 @@ from tqdm import tqdm
 import torchvision.transforms.functional as TF
 
 class CoordinateDataset(Dataset):
-    def __init__(self, root_dir, output_res, augment=False, num_workers=32, only10=False):
+    def __init__(self, root_dir, im_sz, output_res, augment=False, num_workers=32, only10=False):
         self.root_dir = root_dir
+        self.im_sz = im_sz
         self.output_res = output_res
         self.augment = augment
         csv_file = os.path.join(root_dir, 'Data.csv')
@@ -35,7 +36,7 @@ class CoordinateDataset(Dataset):
             image, points = custom_transform(image, points)
 
         image_tensor = transforms.Compose([
-            transforms.Resize((self.output_res, self.output_res)),
+            transforms.Resize((self.im_sz, self.im_sz)),
             transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
         ])(image)
@@ -67,9 +68,15 @@ def custom_transform(image, points, degree_range=(-15, 15), translate_range=(0.1
     # Update points according to transformations
     cos_a, sin_a = np.cos(np.radians(angle)), np.sin(np.radians(angle))
     rotation_matrix = np.array([[cos_a, -sin_a], [sin_a, cos_a]])
-    points = (points - 0.5) * rotation_matrix * scale + 0.5 + np.array(translations) / np.array([image.width, image.height])
-    points = np.clip(points, 0, 1)
 
+    # Apply rotation matrix to each point individually
+    transformed_points = np.zeros_like(points)
+    for i, point in enumerate(points):
+        shifted_point = (point - 0.5) * scale
+        rotated_point = np.dot(shifted_point, rotation_matrix)
+        transformed_points[i] = rotated_point + 0.5 + np.array(translations) / np.array([image.width, image.height])
+
+    transformed_points = np.clip(transformed_points, 0, 1)
     transformed_image = transforms.ColorJitter(contrast=(0.8, 1.2))(transformed_image)
 
-    return transformed_image, points
+    return transformed_image, transformed_points

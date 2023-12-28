@@ -134,14 +134,14 @@ def init():
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
-    heatmap_res = config['inference']['output_res']
+    heatmap_res = config['train']['output_res']
     # Initialize your CoordinateDataset and DataLoader here
     im_sz = config['inference']['inp_dim']
     train_dataset = CoordinateDataset(root_dir=train_dir, im_sz=im_sz, output_res=heatmap_res, augment=True)
-    train_loader = DataLoader(train_dataset, batch_size=config['train']['batch_size'], shuffle=True, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=config['train']['batchsize'], shuffle=True, num_workers=4)
 
     valid_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, output_res=heatmap_res, augment=False)
-    valid_loader = DataLoader(valid_dataset, batch_size=config['train']['batch_size'], shuffle=False, num_workers=4)
+    valid_loader = DataLoader(valid_dataset, batch_size=config['train']['batchsize'], shuffle=False, num_workers=4)
 
     return func, train_loader, valid_loader, config
 
