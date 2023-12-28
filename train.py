@@ -71,15 +71,15 @@ def reload(config):
     elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
         resume = os.path.join('exp', opt.continue_exp)
         resume_file = os.path.join(resume, 'pose_checkpoint.pt')
-        # if os.path.isfile(resume_file):
-        #     print("=> loading checkpoint '{}'".format(resume))
-        #     checkpoint = torch.load(resume_file)
-        #     config['inference']['net'].load_state_dict(checkpoint['state_dict'])
-        #     config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
-        #     config['train']['epoch'] = checkpoint['epoch']
-        #     print("=> loaded checkpoint '{}' (epoch {})"
-        #           .format(resume, checkpoint['epoch']))
-        # else:
+        if os.path.isfile(resume_file):
+            print("=> loading checkpoint '{}'".format(resume))
+            checkpoint = torch.load(resume_file)
+            config['inference']['net'].load_state_dict(checkpoint['state_dict'])
+            config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
+            config['train']['epoch'] = checkpoint['epoch']
+            print("=> loaded checkpoint '{}' (epoch {})"
+                  .format(resume, checkpoint['epoch']))
+    else:
         print("=> no checkpoint found at '{}'".format(resume))
         exit(0)
 

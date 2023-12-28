@@ -138,6 +138,8 @@ def make_network(configs):
                         toprint += ' {}'.format(format(j.mean(), '.8f'))
             logger.write(toprint)
             logger.flush()
+
+            print(toprint)
             
             if phase == 'train':
                 optimizer = train_cfg['optimizer']
