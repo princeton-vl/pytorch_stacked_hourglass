@@ -30,14 +30,37 @@ def do_inference(img_tensor, model):
     return preds
 
 def draw_predictions(img_tensor, keypoints, save_path=None):
-    img = img_tensor.cpu().numpy().transpose(1, 2, 0)
+    # Convert the tensor to an image
+    img = img_tensor.cpu().numpy().transpose(1, 2, 0)  # CHW to HWC
     img = (img * 255).astype(np.uint8)
-    for i in range(keypoints.shape[1]):
-        x, y, _ = keypoints[0, i].detach().cpu().numpy()
-        cv2.circle(img, (x, y), 2, (0, 255, 0), -1)
-    if save_path is not None:
+
+    nstack = keypoints.shape[0]  # Number of stacks
+    oup_dim = keypoints.shape[1]  # Number of keypoints
+
+    # Colors for each keypoint
+    colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255)]  # Adjust as needed
+
+    for stack in range(nstack):
+        for k in range(oup_dim):
+            x, y, conf = keypoints[stack, k].detach().cpu().numpy()
+            x, y = int(x), int(y)  # Convert to integer
+            if conf > 0.5:  # Threshold for confidence, adjust as needed
+                color = colors[k % len(colors)]  # Color for this keypoint
+                cv2.circle(img, (x, y), 5, color, -1)  # Draw circle
+
+    if save_path:
         cv2.imwrite(save_path, img)
+    else:
+        # Display the image
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.show()
+
     return img
+
+import matplotlib.pyplot as plt
+
+
+
 
 def main():
     from train import init
@@ -63,24 +86,47 @@ def main():
     test_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, output_res=heatmap_res, augment=False)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=4)
 
+    def display_img_tensor(img_tensor):
+        # Convert the tensor to numpy array
+        #print(f"><><><<><: {img_tensor.shape}")
+        img = img_tensor.squeeze(0).cpu().numpy().transpose(1, 2, 0)  # Convert from CHW to HWC
+        img = np.clip(img, 0, 1)  # Ensure the pixel values are within [0, 1]
+
+        # Display the image
+        plt.imshow(img)
+        plt.axis('off')  # Turn off the axis
+        plt.show()
+
 
 
     model = config['inference']['net']
     model.eval()  # Set the model to evaluation mode
 
-    for i, (img_tensor, _) in enumerate(tqdm.tqdm(test_loader)):
-        if i >= 20:
+    for i, (img_tensor, _) in enumerate(test_loader):#enumerate(tqdm.tqdm(test_loader)):
+        #display_img_tensor(img_tensor)
+        print(f"test image >>>>>>>>>>:\n{test_img}")
+        #test_img = np.linspace(0, 255, 100*100).reshape((100, 100)).astype(np.uint8)
+        test_img = img_tensor.squeeze(0).cpu().numpy().transpose(1,2,0).astype(np.uint8)
+
+        plt.imshow(test_img, cmap='gray')
+        plt.axis('off')  # Turn off the axis
+        #plt.show()
+        # save_path = '/content/drive/MyDrive/point_localization/exps/plot2.png'
+        # plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+        plt.close()  # Close the figure to free memory
+        
+        if i >= 1:
             break
 
         # preds will be of shape [batch_size, nstack, oup_dim, height, width]
-        preds = do_inference(img_tensor, model)
+        # preds = do_inference(img_tensor, model)
 
-        # Extract keypoints from the heatmaps
-        # Assuming output resolution (height, width) of heatmaps is 64
-        keypoints = extract_keypoints_from_heatmaps(config, preds, output_res=64)  # [0] to remove batch dimension
+        # # Extract keypoints from the heatmaps
+        # # Assuming output resolution (height, width) of heatmaps is 64
+        # keypoints = extract_keypoints_from_heatmaps(config, preds, output_res=64)  # [0] to remove batch dimension
 
-        # Draw predictions on the image
-        draw_predictions(img_tensor[0], keypoints)
+        # # Draw predictions on the image
+        # draw_predictions(img_tensor[0], keypoints)
 
 if __name__ == '__main__':
     main()
