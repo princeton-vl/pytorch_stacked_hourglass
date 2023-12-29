@@ -8,42 +8,40 @@ from torch.utils.data import DataLoader
 import cv2
 import matplotlib.pyplot as plt
 
+def extract_keypoints_from_heatmaps(config, heatmaps, output_res):
+    nstack = config['inference']['nstack']
+    oup_dim = config['inference']['oup_dim']
+    heatmaps = heatmaps.view(nstack, oup_dim, -1)
+    maxval, idx = torch.max(heatmaps, dim=2)
+    maxval = maxval.view(nstack, oup_dim, 1)
+    idx = idx.view(nstack, oup_dim, 1)
+    keypoints = torch.cat((idx % output_res, idx // output_res, maxval), dim=2)
+    return keypoints
+
+
 def do_inference(img_tensor, model):
     model.eval()
     # Move the input tensor to the same device as the model
     device = next(model.parameters()).device
     img_tensor = img_tensor.to(device)
-    # Add a batch dimension to img_tensor since models expect batched input
-    img_tensor = img_tensor.unsqueeze(0)
     # Forward pass
-    with torch.no_grad():  # No need to track gradients during inference
+    with torch.no_grad():
         preds = model(img_tensor)
-    # Remove batch dimension and move predictions to CPU for further processing
-    preds = preds.squeeze(0).cpu()
     return preds
 
-def draw_predictions(img_tensor, preds, save_path=None):
-    # Convert the tensor to an image
-    img = img_tensor.cpu().numpy().transpose(1, 2, 0)  # CHW to HWC
+def draw_predictions(img_tensor, keypoints, save_path=None):
+    img = img_tensor.cpu().numpy().transpose(1, 2, 0)
     img = (img * 255).astype(np.uint8)
-
-    # Draw each prediction
-    for point in preds:
-        x, y = point
-        cv2.circle(img, (int(x), int(y)), 5, (0, 255, 0), -1)
-
-    if save_path:
+    for i in range(keypoints.shape[1]):
+        x, y, _ = keypoints[0, i].detach().cpu().numpy()
+        cv2.circle(img, (x, y), 2, (0, 255, 0), -1)
+    if save_path is not None:
         cv2.imwrite(save_path, img)
-    else:
-        # Display the image
-        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        plt.show()
-
     return img
 
 def main():
     from train import init
-    func, _, _, config = init()
+    func, config = init()
 
     # Assuming the path to your pretrained model
     pretrained_model_path = '/content/drive/MyDrive/point_localization/stacked_hourglass_point_localization/exp/hourglass_01/checkpoint.pt'
@@ -71,15 +69,18 @@ def main():
     model.eval()  # Set the model to evaluation mode
 
     for i, (img_tensor, _) in enumerate(tqdm.tqdm(test_loader)):
-        if i >= 20: break
+        if i >= 20:
+            break
 
-        preds = do_inference(img_tensor, func)
-        # Assuming preds are in the format: Nx2 (for N keypoints)
-        # Convert tensor to numpy array and reshape
-        preds = preds.view(-1, 2).numpy()
+        # preds will be of shape [batch_size, nstack, oup_dim, height, width]
+        preds = do_inference(img_tensor, model)
 
-        # Draw predictions on the image and print/show them
-        draw_predictions(img_tensor[0], preds)
+        # Extract keypoints from the heatmaps
+        # Assuming output resolution (height, width) of heatmaps is 64
+        keypoints = extract_keypoints_from_heatmaps(config, preds, output_res=64)  # [0] to remove batch dimension
+
+        # Draw predictions on the image
+        draw_predictions(img_tensor[0], keypoints)
 
 if __name__ == '__main__':
     main()
