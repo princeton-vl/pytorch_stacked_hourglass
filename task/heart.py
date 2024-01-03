@@ -69,6 +69,7 @@ class Trainer(nn.Module):
             if type(combined_hm_preds)!=list and type(combined_hm_preds)!=tuple:
                 combined_hm_preds = [combined_hm_preds]
             loss = self.calc_loss(**labels, combined_hm_preds=combined_hm_preds)
+            print(f"ERIC: {torch.shape(combined_hm_preds)}, {torch.shape(loss)}}")
             return list(combined_hm_preds) + list([loss])
 
 def make_network(configs):
@@ -96,6 +97,7 @@ def make_network(configs):
         os.mkdir(exp_path)
     logger = open(os.path.join(exp_path, 'log'), 'a+')
 
+    # **inputs = {'imgs': images, 'heatmaps': heatmaps}
     def make_train(batch_id, config, phase, **inputs):
         for i in inputs:
             try:
@@ -119,7 +121,7 @@ def make_network(configs):
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
             num_loss = len(config['train']['loss'])
 
-            losses = {i[0]: result[-num_loss + idx]*i[1] for idx, i in enumerate(config['train']['loss'])}
+            losses = {i[0]: result[-num_loss + idx]*i[1] for idx, i in enumerate(config['train']['loss'])}  # i: ['combined_hm_loss', 1]
                         
             loss = 0
             toprint = '\n{}: '.format(batch_id)

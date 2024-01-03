@@ -59,6 +59,10 @@ class PoseNet(nn.Module):
                 x = x + self.merge_preds[i](preds) + self.merge_features[i](feature)
         return torch.stack(combined_hm_preds, 1)
 
+    # def heatmapLoss.forward(self, pred, gt):
+    #     l = ((pred - gt)**2)
+    #     l = l.mean(dim=3).mean(dim=2).mean(dim=1)
+    #     return l
     def calc_loss(self, combined_hm_preds, heatmaps):
         combined_loss = []
         for i in range(self.nstack):

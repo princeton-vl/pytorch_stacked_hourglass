@@ -150,7 +150,6 @@ def init():
 
     func = task.make_network(config)
     reload(config)
-    config['train']
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
