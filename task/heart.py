@@ -69,7 +69,8 @@ class Trainer(nn.Module):
             if type(combined_hm_preds)!=list and type(combined_hm_preds)!=tuple:
                 combined_hm_preds = [combined_hm_preds]
             loss = self.calc_loss(**labels, combined_hm_preds=combined_hm_preds)
-            print(f"ERIC: {torch.shape(combined_hm_preds)}, {torch.shape(loss)}}")
+            print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}")
+            print(f"ERIC 2: {np.shape(combined_hm_preds)}, {loss.shape}")
             return list(combined_hm_preds) + list([loss])
 
 def make_network(configs):
@@ -120,6 +121,10 @@ def make_network(configs):
         if phase != 'inference':
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
             num_loss = len(config['train']['loss'])
+
+            print(f"type of result: {type(result)}")
+            print(f"shape of result: {result.shape}")
+            # result = [combined_hm_preds, loss]
 
             losses = {i[0]: result[-num_loss + idx]*i[1] for idx, i in enumerate(config['train']['loss'])}  # i: ['combined_hm_loss', 1]
                         
