@@ -78,9 +78,9 @@ def main():
     from train import init
     func, config = init()
 
-    # Assuming the path to your pretrained model
-    pretrained_model_path = '/content/drive/MyDrive/point_localization/stacked_hourglass_point_localization/exp/hourglass_01/checkpoint.pt'
-    config['opt'].pretrained_model = pretrained_model_path
+    # # ERIC: Assuming the path to your pretrained model
+    # pretrained_model_path = '/content/drive/MyDrive/point_localization/stacked_hourglass_point_localization/exp/hourglass_01/checkpoint.pt'
+    # config['opt'].pretrained_model = pretrained_model_path
 
     opt = config['opt']
     if opt.pretrained_model and os.path.isfile(opt.pretrained_model):  # Check if pretrained model path is provided

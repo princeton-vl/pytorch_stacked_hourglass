@@ -23,55 +23,28 @@ def parse_command_line():
     args = parser.parse_args()
     return args
 
-### eric: FINETUNING HAPPENS IN HERE ###
 def reload(config):
     """
-    Load or initialize model's parameters by config from config['opt'].continue_exp
-    or from a specified pretrained model file.
-    config['train']['epoch'] records the epoch num.
-    config['inference']['net'] is the model.
+    Load model's parameters from a specified pretrained model file or continue from a checkpoint.
+    The function will also reinitialize the optimizer.
     """
     opt = config['opt']
 
     if opt.pretrained_model:  # Check if pretrained model path is provided
         if os.path.isfile(opt.pretrained_model):
-            # print("=> loading pretrained model '{}'".format(opt.pretrained_model))
-            # checkpoint = torch.load(opt.pretrained_model)
-            # # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
-            # # config['inference']['net'].load_state_dict(state_dict)
-            # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items() if not k.endswith('outs.1')}
-            # config['inference']['net'].load_state_dict(state_dict, strict=False)
-            # ### eric: finetuneable last layer ###
-            # new_layer0 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
-            # new_layer1 = torch.nn.Conv2d(config['inference']['inp_dim'], 12, kernel_size=1, stride=1, padding=0)
-
-            # # Modify the second stack to accept an input dimension of 12
-            # new_layer1_in = nn.Sequential(Hourglass(4, 12, bn=False, increase=0))  # Replace '12' with the correct input dimension
-
-            # if torch.cuda.is_available():
-            #     new_layer0 = new_layer0.cuda()
-            #     new_layer1 = new_layer1.cuda()
-            #     new_layer1_in = new_layer1_in.cuda()
-            # config['inference']['net'].model.outs[0] = new_layer0
-            # config['inference']['net'].model.outs[1] = new_layer1
-            # config['inference']['net'].model.hgs[1] = new_layer1_in
-            # config['inference']['inp_dim'] = 12
-            # # freeze all but outs layers
-            # for name, param in config['inference']['net'].named_parameters():
-            #     if 'outs' not in name:
-            #         param.requires_grad = False
-            # for param in config['inference']['net'].model.hgs[1].parameters():
-            #     param.requires_grad = True
-            # # Reinitialize the optimizer
+            print("=> loading pretrained model '{}'".format(opt.pretrained_model))
+            checkpoint = torch.load(opt.pretrained_model)
+            state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
+            config['inference']['net'].load_state_dict(state_dict, strict=False)
+            
+            # Reinitialize the optimizer
             config['train']['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['inference']['net'].parameters()), lr=config['train']['learning_rate'])
-
         else:
             print("=> no pretrained model found at '{}'".format(opt.pretrained_model))
             exit(0)
+
     elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
-        #resume = os.path.join('exp', opt.continue_exp)
-        exp_path_gdrive = '/content/stacked_hourglass_point_localization/exp'
-        resume = os.path.join(exp_path_gdrive, opt.continue_exp)
+        resume = os.path.join('exp', opt.continue_exp)
         resume_file = os.path.join(resume, 'checkpoint.pt')
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
@@ -87,6 +60,7 @@ def reload(config):
 
     if 'epoch' not in config['train']:
         config['train']['epoch'] = 0
+
 
     
 def save_checkpoint(state, is_best, filename='checkpoint.pt'):
