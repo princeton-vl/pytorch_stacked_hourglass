@@ -105,6 +105,8 @@ def save(config):
     if config['opt'].continue_exp is not None:
         resume = os.path.join('exp', config['opt'].continue_exp)
     resume_file = os.path.join(resume, 'checkpoint.pt')
+    # eric override
+    resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
     
     save_checkpoint({
             'state_dict': config['inference']['net'].state_dict(),

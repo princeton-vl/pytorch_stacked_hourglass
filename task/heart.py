@@ -29,7 +29,7 @@ __config__ = {
         'output_res': 64,
         'train_iters': 1000,
         'valid_iters': 10,
-        'learning_rate': 1e-3,
+        'learning_rate': 2e-3,
         'max_num_people' : 1,
         'loss': [
             ['combined_hm_loss', 1],
@@ -69,8 +69,8 @@ class Trainer(nn.Module):
             if type(combined_hm_preds)!=list and type(combined_hm_preds)!=tuple:
                 combined_hm_preds = [combined_hm_preds]
             loss = self.calc_loss(**labels, combined_hm_preds=combined_hm_preds)
-            print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}")
-            print(f"ERIC 2: {np.shape(combined_hm_preds)}, {loss.shape}")
+            #print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}") >> list, Tensor
+            # print(f"ERIC 2: {combined_hm_preds[0].shape}, {loss.shape}") >> [16,2,6,64,64], [16,2]
             return list(combined_hm_preds) + list([loss])
 
 def make_network(configs):
@@ -120,43 +120,36 @@ def make_network(configs):
 
         if phase != 'inference':
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
-            num_loss = len(config['train']['loss'])
+            # Assuming result[0] are the predictions and result[1] are the losses
+            predictions = result[0]
+            losses_per_stack = result[1]
 
-            print(f"type of result: {type(result)}")
-            print(f"shape of result: {result.shape}")
-            # result = [combined_hm_preds, loss]
+            # Aggregate loss across all stacks
+            total_loss = losses_per_stack.mean()
 
-            losses = {i[0]: result[-num_loss + idx]*i[1] for idx, i in enumerate(config['train']['loss'])}  # i: ['combined_hm_loss', 1]
-                        
-            loss = 0
-            toprint = '\n{}: '.format(batch_id)
-            for i in losses:
-                loss = loss + torch.mean(losses[i])
+            # Logging
+            toprint = f'\n{batch_id}: Total Loss: {total_loss.item():.8f}\n'
+            for stack_idx in range(losses_per_stack.shape[1]):
+                stack_loss = losses_per_stack[:, stack_idx].mean()
+                toprint += f'Stack {stack_idx} Loss: {stack_loss.item():.8f}\n'
 
-                my_loss = make_output( losses[i] )
-                my_loss = my_loss.mean()
-
-                if my_loss.size == 1:
-                    toprint += ' {}: {}'.format(i, format(my_loss.mean(), '.8f'))
-                else:
-                    toprint += '\n{}'.format(i)
-                    for j in my_loss:
-                        toprint += ' {}'.format(format(j.mean(), '.8f'))
             logger.write(toprint)
             logger.flush()
-            
+
+            # Backpropagation and optimization step
             if phase == 'train':
                 optimizer = train_cfg['optimizer']
                 optimizer.zero_grad()
-                loss.backward()
+                total_loss.backward()
                 optimizer.step()
-            
+
+            # Learning rate decay
             if batch_id == config['train']['decay_iters']:
-                ## decrease the learning rate after decay # iterations
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = config['train']['decay_lr']
-            
+
             return None
+
         else:
             out = {}
             net = net.eval()
