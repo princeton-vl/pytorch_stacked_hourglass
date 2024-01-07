@@ -12,5 +12,6 @@ tmp
 *~
 exp
 data/VHS/VHS-Top-5286-Eric/*
+data/VHS/.DS_Store
 models/local_models/
 preaugment_data.py
