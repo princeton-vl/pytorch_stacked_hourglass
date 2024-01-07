@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import scipy.stats as st
 import pandas as pd
 import random
 import torch
@@ -9,6 +8,7 @@ from torchvision import transforms
 from PIL import Image
 from multiprocessing import Pool
 from tqdm import tqdm
+import scipy.ndimage as ndimage
 
 # Assuming TF refers to torchvision.transforms.functional
 import torchvision.transforms.functional as TF
@@ -42,43 +42,18 @@ class CoordinateDataset(Dataset):
             transforms.ToTensor(),
         ])(image)
 
-        heatmaps = self.generate_heatmaps(points, self.output_res, use_gaussian=True)
+        heatmaps = self.generate_heatmaps(points, self.output_res)
 
         return image_tensor, heatmaps
-    
-    def generate_gaussian_heatmap(self, size, sigma):
-        """Generate a 2D Gaussian heatmap."""
-        interval = (2*sigma+1.)/(size)
-        x = np.linspace(-sigma-interval/2., sigma+interval/2., size+1)
-        kern1d = np.diff(st.norm.cdf(x))
-        kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
-        kernel = kernel_raw/kernel_raw.sum()
-        return kernel
 
-    def generate_heatmaps(self, points, output_res, use_gaussian=False, sigma=1):
+    def generate_heatmaps(self, points, output_res):
         num_keypoints = len(points)
         heatmaps = np.zeros((num_keypoints, output_res, output_res), dtype=np.float32)
-        size = 6*sigma + 1  # for use_gaussian=True
-
         for i in range(num_keypoints):
             x, y = int(points[i, 0] * output_res), int(points[i, 1] * output_res)
             if 0 <= x < output_res and 0 <= y < output_res:
-                # Simple binary heatmap; consider using Gaussian distribution for better results
-                if not use_gaussian:
-                    heatmaps[i, y, x] = 1
-                else:
-                    gaussian = self.generate_gaussian_heatmap(size, sigma)
-                    # Ensure the Gaussian is placed correctly on the heatmap
-                    x_start, y_start = x - size // 2, y - size // 2
-                    x_end, y_end = x_start + size, y_start + size
-                    # Handle edge cases
-                    x_start, y_start = max(0, x_start), max(0, y_start)
-                    x_end, y_end = min(output_res, x_end), min(output_res, y_end)
-                    heatmap_part = heatmaps[i, y_start:y_end, x_start:x_end]
-                    gaussian_part = gaussian[:y_end-y_start, :x_end-x_start]
-
-                    heatmaps[i, y_start:y_end, x_start:x_end] = np.maximum(heatmap_part, gaussian_part)
-
+                heatmaps[i, y, x] = 1
+                heatmaps[i] = ndimage.gaussian_filter(heatmaps[i], sigma=1)
         return torch.tensor(heatmaps, dtype=torch.float32)
 
 def custom_transform(image, points, degree_range=(-15, 15), translate_range=(0.1, 0.1), scale_range=(0.8, 1.2)):

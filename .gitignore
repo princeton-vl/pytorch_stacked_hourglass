@@ -10,6 +10,7 @@ _ext
 tmp
 *.o*
 *~
-data/VHS-Top-5286-Eric/*
 exp
 data/VHS/VHS-Top-5286-Eric/*
+models/local_models/
+preaugment_data.py

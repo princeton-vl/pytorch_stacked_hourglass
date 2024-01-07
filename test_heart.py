@@ -104,7 +104,10 @@ def main():
         config['inference']['net'].load_state_dict(state_dict, strict=True)
 
     # Load or initialize the model's parameters
+    # hg_dir = '/Users/ewern/Desktop/code/MetronMind/stacked_hourglass_point_localization/'
+    # chkpt_path = os.path.join(hg_dir, 'models/local_models/checkpoint.pt')
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
+    
     im_sz = config['inference']['inp_dim']
     heatmap_res = config['train']['output_res']
     test_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, output_res=heatmap_res, augment=False)
@@ -127,6 +130,7 @@ def main():
         # keypoints shape rn: torch.Size([2, 6, 3])
 
         # # Draw predictions on the image
+        #save_path = '/content/drive/MyDrive/point_localization/exps/img8.png'
         save_path = '/content/drive/MyDrive/point_localization/exps/img8.png'
         draw_predictions(img_tensor[0], keypoints, config, save_path=save_path)
         print(f"ballsssss: {img_tensor.shape}")

@@ -46,6 +46,7 @@ def reload(config):
     elif opt.continue_exp:  # Fallback to continue_exp if no pretrained model path is provided
         resume = os.path.join('exp', opt.continue_exp)
         resume_file = os.path.join(resume, 'checkpoint.pt')
+        resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
         if os.path.isfile(resume_file):
             print("=> loading checkpoint '{}'".format(resume))
             checkpoint = torch.load(resume_file)
@@ -81,6 +82,7 @@ def save(config):
     resume_file = os.path.join(resume, 'checkpoint.pt')
     # eric override
     resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
+    # resume_file = '/Users/ewern/Desktop/code/MetronMind/stacked_hourglass_point_localization/models/local_models/checkpoint.pt'
     
     save_checkpoint({
             'state_dict': config['inference']['net'].state_dict(),
@@ -129,14 +131,20 @@ def init():
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
+    # vhs_dir = '/Users/ewern/Desktop/code/MetronMind/stacked_hourglass_point_localization/data/VHS/VHS-Top-5286-Eric'
+    # train_dir = os.join(vhs_dir, 'Train')
+    # train_dir = os.join(vhs_dir, 'Test')
+
     heatmap_res = config['train']['output_res']
     # Initialize your CoordinateDataset and DataLoader here
     im_sz = config['inference']['inp_dim']
     
-    train_dataset = CoordinateDataset(root_dir=train_dir, im_sz=im_sz, output_res=heatmap_res, augment=True)
+    train_dataset = CoordinateDataset(root_dir=train_dir, im_sz=im_sz,\
+            output_res=heatmap_res, augment=True, only10=False)
     train_loader = DataLoader(train_dataset, batch_size=config['train']['batchsize'], shuffle=True, num_workers=4)
 
-    valid_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, output_res=heatmap_res, augment=False)
+    valid_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz,\
+            output_res=heatmap_res, augment=False, only10=False)
     valid_loader = DataLoader(valid_dataset, batch_size=config['train']['batchsize'], shuffle=False, num_workers=4)
 
     return func, train_loader, valid_loader, config

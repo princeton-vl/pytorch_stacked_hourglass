@@ -43,21 +43,6 @@ __config__ = {
     },
 }
 
-def save_heatmaps_for_debug(hm_preds, labels):
-    heatmaps = heatmaps.numpy()
-
-    # Plotting and saving the heatmaps
-    num_keypoints = heatmaps.shape[0]
-    for i in range(num_keypoints):
-        plt.figure()
-        plt.imshow(heatmaps[i], cmap='hot', interpolation='nearest')
-        plt.axis('off')  # Turn off the axis
-
-        # Define save path for each heatmap
-        save_path = f'/content/drive/MyDrive/point_localization/exps/heatmap_{i+1}.png'
-        plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
-        plt.close()
-
 class Trainer(nn.Module):
     """
     The wrapper module that will behave differetly for training or testing
@@ -85,12 +70,28 @@ class Trainer(nn.Module):
             combined_hm_preds = self.model(imgs, **inps)
             if type(combined_hm_preds)!=list and type(combined_hm_preds)!=tuple:
                 combined_hm_preds = [combined_hm_preds]
-            loss = self.calc_loss(**labels, combined_hm_preds=combined_hm_preds)
-            print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}, {type(labels)}") # >> list, Tensor
-            # print(f"ERIC 2: {combined_hm_preds[0].shape}, {loss.shape}") >> [16,2,6,64,64], [16,2]
+            # print(f"eric: >>$$$ {labels.keys()}")  >  dict_keys(['heatmaps'])
+            true_heatmaps = labels['heatmaps']
+            loss = self.calc_loss(combined_hm_preds, true_heatmaps)
+            # print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}, {type(labels)}") # >> list, Tensor
+            # # print(f"ERIC 2: {combined_hm_preds[0].shape}, {loss.shape}") >> [16,2,6,64,64], [16,2]
             
-            save_heatmaps_for_debug(combined_hm_preds, labels)         
-            
+            # # #save_heatmaps_for_debug(combined_hm_preds, **labels)  
+            # heatmaps = true_heatmaps.cpu().numpy()  # shape (bs,6,64,64)
+
+            # # Plotting and saving the heatmaps
+            # # print(f"johnny: num_keypoints = {heatmaps.shape}")
+            # num_keypoints = heatmaps[0].shape[0]
+            # for i in range(num_keypoints):
+            #     plt.figure()
+            #     plt.imshow(heatmaps[0][i], cmap='hot', interpolation='nearest')
+            #     plt.axis('off')  # Turn off the axis
+
+            #     # Define save path for each heatmap
+            #     save_path = f'/content/drive/MyDrive/point_localization/exps/hm_{i+1}.png'
+            #     plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+            #     plt.close()
+
             return list(combined_hm_preds) + list([loss])
 
 def make_network(configs):
