@@ -20,50 +20,41 @@ def do_inference(img_tensor, model):
         preds = model(img_tensor)
     return preds
 
+def draw_cross(img, center, color, size=5):
+    """ Draw a small cross at the specified center point on the image. """
+    x, y = center
+    cv2.line(img, (x - size, y), (x + size, y), color, 2)
+    cv2.line(img, (x, y - size), (x, y + size), color, 2)
+
 def draw_predictions(img_tensor, pred_keypoints, true_points, config, save_path=None):
-    # Convert the tensor to an image
-    print(f"true points shape: {np.shape(true_points)}, keypoints: {pred_keypoints.shape}")
-    img = img_tensor.permute(1,2,0).cpu().numpy()  # CHW to HWC
+    img = img_tensor.permute(1, 2, 0).cpu().numpy()  # CHW to HWC
     img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8UC3)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     nstack = pred_keypoints.shape[0]  # Number of stacks
     oup_dim = pred_keypoints.shape[1]  # Number of keypoints
     scale_factor = config['inference']['inp_dim'] / config['train']['output_res']
-    
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    # Colors for each keypoint
-    colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255)]  # Adjust as needed
-    print("drawing predictions")
-    for i, stack in enumerate(range(nstack)):
-
+    # Draw predicted keypoints
+    for stack in range(nstack):
         for k in range(oup_dim):
             x, y, conf = pred_keypoints[stack, k]
-            x, y = int(x), int(y)  # Convert to integer
-            print(f"x: {x}, y: {y}")
-            x = int(x * scale_factor)
-            y = int(y * scale_factor)
+            x, y = int(x * scale_factor), int(y * scale_factor)
+            draw_cross(img, (x, y), (0, 0, 255))  # Red color for predicted points
 
-            color_intensity = int(conf * 255)
-            red = int(conf * 255) if i==0 else 0
-            blue = int(conf * 255) if i==1 else 0
+    # Draw true points
+    for point in true_points:
+        x, y = point
+        x, y = int(x * scale_factor), int(y * scale_factor)
+        draw_cross(img, (x, y), (0, 255, 0))  # Green color for true points
 
-            # Draw the circle with color intensity based on confidence
-            cv2.circle(img, (x, y), 3, (red, 0, blue), -1)  # Green with varying intensity
-
-    plt.imshow(img, cmap='gray')
+    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     plt.axis('off')  # Turn off the axis
-    
+
     if save_path:
-        print(f"getting here")
         plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
         plt.close()  # Close the figure to free memory
-    # if save_path:
-    #     cv2.imwrite(save_path, img)
-    # else:
-    #     # Display the image
-    #     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    #     plt.show()
+
     return img
 
 # #print(heatmaps.shape)  # torch.Size([bs, nstack, oup_dim, output_res, output_res])
@@ -118,24 +109,19 @@ def main():
     model = config['inference']['net']
     model.eval()  # Set the model to evaluation mode
 
-    for i, (img_tensor, true_points) in enumerate(test_loader):#enumerate(tqdm.tqdm(test_loader)):
-        if i >= 1:
-            break
 
-        # preds will be of shape [batch_size, nstack, oup_dim, height, width]
+    for i, (img_tensor, true_points) in enumerate(test_loader):
+        # Perform inference and extract keypoints
         preds = do_inference(img_tensor, model)
-        #print(preds.shape)  # torch.Size([1, 2, 6, 64, 64])
+        pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
 
-        # Extract keypoints from the heatmaps
-        # Assuming output resolution (height, width) of heatmaps is 64
-        pred_keypoints = extract_keypoints_from_heatmaps(config, preds)  # [0] to remove batch dimension
-        # keypoints shape rn: torch.Size([2, 6, 3])
+        # Generate a unique save path for each image
+        # Change the base directory as per your requirement
+        save_dir = '/content/drive/MyDrive/point_localization/exps/'
+        save_path = os.path.join(save_dir, f'img_{i}.png')
 
-        # # Draw predictions on the image
-        #save_path = '/content/drive/MyDrive/point_localization/exps/img8.png'
-        save_path = '/content/drive/MyDrive/point_localization/exps/img8.png'
+        # Draw predictions and save the image
         draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
-        print(f"ballsssss: {img_tensor.shape}")
 
 if __name__ == '__main__':
     main()
