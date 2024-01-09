@@ -20,6 +20,7 @@ def parse_command_line():
     parser.add_argument('-e', '--exp', type=str, default='pose', help='experiments name')
     parser.add_argument('-m', '--max_iters', type=int, default=250, help='max number of iterations (thousands)')
     parser.add_argument('-p', '--pretrained_model', type=str, help='path to pretrained model')
+    parser.add_argument('-o', '--only10', type=bool, default=False, help='only use 10 images')
     args = parser.parse_args()
     return args
 
@@ -140,14 +141,14 @@ def init():
     im_sz = config['inference']['inp_dim']
     
     train_dataset = CoordinateDataset(root_dir=train_dir, im_sz=im_sz,\
-            output_res=heatmap_res, augment=True, only10=False)
+            output_res=heatmap_res, augment=True, only10=opt.only10)
     train_loader = DataLoader(train_dataset, batch_size=config['train']['batchsize'], shuffle=True, num_workers=4)
 
     valid_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz,\
-            output_res=heatmap_res, augment=False, only10=False)
+            output_res=heatmap_res, augment=False, only10=opt.only10)
     valid_loader = DataLoader(valid_dataset, batch_size=config['train']['batchsize'], shuffle=False, num_workers=4)
 
-    return func, train_loader, valid_loader, config
+    return func, config#train_loader, valid_loader, config
 
 def main():
     func, train_loader, valid_loader, config = init()

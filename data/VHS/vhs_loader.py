@@ -14,11 +14,12 @@ import scipy.ndimage as ndimage
 import torchvision.transforms.functional as TF
 
 class CoordinateDataset(Dataset):
-    def __init__(self, root_dir, im_sz, output_res, augment=False, num_workers=32, only10=False):
+    def __init__(self, root_dir, im_sz, output_res, augment=False, num_workers=32, only10=False, testing=False):
         self.root_dir = root_dir
         self.im_sz = im_sz
         self.output_res = output_res
         self.augment = augment
+        self.testing = testing
         csv_file = os.path.join(root_dir, 'Data.csv')
         self.data_frame = pd.read_csv(csv_file, header=0).head(10) if only10 else pd.read_csv(csv_file, header=0)
 
@@ -43,6 +44,8 @@ class CoordinateDataset(Dataset):
         ])(image)
 
         heatmaps = self.generate_heatmaps(points, self.output_res)
+
+        if self.testing: return image_tensor, points
 
         return image_tensor, heatmaps
 

@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from models.layers import Conv, Hourglass, Pool, Residual
 from task.loss import HeatmapLoss
+import matplotlib.pyplot as plt
+import numpy as np
 
 class UnFlatten(nn.Module):
     def forward(self, input):
@@ -65,7 +67,32 @@ class PoseNet(nn.Module):
     #     return l
     def calc_loss(self, combined_hm_preds, heatmaps):
         combined_loss = []
+        # print(f"types: {type(combined_hm_preds)}, {type(heatmaps)}") # list, tensor
+        # print(f"combined_hm_preds shape: {(combined_hm_preds[0].shape)}\
+    # heatmaps shape: {(heatmaps.shape)}")
         for i in range(self.nstack):
             combined_loss.append(self.heatmapLoss(combined_hm_preds[0][:,i], heatmaps))
         combined_loss = torch.stack(combined_loss, dim=1)
+        # print(f"combined_loss shape: {combined_loss[0].shape}")
+
+
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+        # Convert the tensors to numpy for visualization
+        pred = combined_hm_preds[0][0][0][0].detach().cpu().numpy()
+        target = heatmaps[0][0].detach().cpu().numpy()
+
+        # Visualize the prediction
+        axes[0].imshow(pred, cmap='hot', interpolation='nearest')
+        axes[0].set_title('Predicted Heatmap')
+
+        # Visualize the target
+        axes[1].imshow(target, cmap='hot', interpolation='nearest')
+        axes[1].set_title('Target Heatmap')
+
+        plt.savefig('/content/drive/MyDrive/point_localization/exps/hm0.0.png')
+
+
+
+
         return combined_loss
