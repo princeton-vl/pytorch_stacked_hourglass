@@ -95,10 +95,10 @@ def make_network(configs):# wandb_config=None):
     
     ## optimizer, experiment setup
     exp_path = '/content/drive/MyDrive/point_localization/exps'
-    if config['opt'].continue_exp is not None:  # don't overwrite the original exp I guess ??
-        exp_path = os.path.join(exp_path, config['opt'].continue_exp)
+    if configs['opt']['continue_exp'] is not None:  # don't overwrite the original exp I guess ??
+        exp_path = os.path.join(exp_path, configs['opt']['continue_exp'])
     else:
-        exp_path = os.path.join(exp_path, config['opt'].exp)
+        exp_path = os.path.join(exp_path, configs['opt']['exp'])
 
     if not os.path.exists(exp_path):
         os.mkdir(exp_path)

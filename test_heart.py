@@ -88,12 +88,12 @@ def main():
 
     # # ERIC: Assuming the path to your pretrained model
     # pretrained_model_path = '/content/drive/MyDrive/point_localization/stacked_hourglass_point_localization/exp/hourglass_01/checkpoint.pt'
-    # config['opt'].pretrained_model = pretrained_model_path
+    # config['opt']['pretrained_model'] = pretrained_model_path
 
     opt = config['opt']
-    if opt.pretrained_model and os.path.isfile(opt.pretrained_model):  # Check if pretrained model path is provided
-        print("=> loading pretrained model '{}'".format(opt.pretrained_model))
-        checkpoint = torch.load(opt.pretrained_model)
+    if ['pretrained_model'] and os.path.isfile(['pretrained_model']):  # Check if pretrained model path is provided
+        print("=> loading pretrained model '{}'".format(['pretrained_model']))
+        checkpoint = torch.load(['pretrained_model'])
         # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
         # config['inference']['net'].load_state_dict(state_dict)
         state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
@@ -107,7 +107,7 @@ def main():
     im_sz = config['inference']['inp_dim']
     heatmap_res = config['train']['output_res']
     test_dataset = CoordinateDataset(root_dir=test_dir, im_sz=im_sz, testing=True,\
-                        output_res=heatmap_res, augment=False, only10=config['opt'].only10)
+                        output_res=heatmap_res, augment=False, only10=config['opt']['only10'])
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=4)
 
     model = config['inference']['net']
