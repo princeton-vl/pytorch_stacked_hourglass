@@ -20,11 +20,11 @@ def do_inference(img_tensor, model):
         preds = model(img_tensor)
     return preds
 
-def draw_cross(img, center, color, size=5):
+def draw_cross(img, center, color, size=1):
     """ Draw a small cross at the specified center point on the image. """
     x, y = center
-    cv2.line(img, (x - size, y), (x + size, y), color, 2)
-    cv2.line(img, (x, y - size), (x, y + size), color, 2)
+    cv2.line(img, (x - size, y-size), (x + size, y+size), color, .5)
+    cv2.line(img, (x+size, y - size), (x-size, y + size), color, .5)
 
 def draw_predictions(img_tensor, pred_keypoints, true_points, config, save_path=None):
     img = img_tensor.permute(1, 2, 0).cpu().numpy()  # CHW to HWC
@@ -33,19 +33,23 @@ def draw_predictions(img_tensor, pred_keypoints, true_points, config, save_path=
 
     nstack = pred_keypoints.shape[0]  # Number of stacks
     oup_dim = pred_keypoints.shape[1]  # Number of keypoints
-    scale_factor = config['inference']['inp_dim'] / config['train']['output_res']
-
-    # Draw predicted keypoints
+    # preds are in range [0,63].  true_points are in range [0,1]
+    scale_factor_pred = config['inference']['inp_dim'] / config['train']['output_res']
+    scale_factor_true = config['inference']['inp_dim']
+    # Draw predicted keypoints from each stack
     for stack in range(nstack):
         for k in range(oup_dim):
             x, y, conf = pred_keypoints[stack, k]
-            x, y = int(x * scale_factor), int(y * scale_factor)
+            #print(f"abc: {x}, {y}")
+            x, y = int(x * scale_factor_pred), int(y * scale_factor_pred)
             draw_cross(img, (x, y), (0, 0, 255))  # Red color for predicted points
 
     # Draw true points
+    true_points = true_points.squeeze(0)  # Remove batch dimension
     for point in true_points:
         x, y = point
-        x, y = int(x * scale_factor), int(y * scale_factor)
+        #print(f"efg: {x}, {y}")
+        x, y = int(x * scale_factor_true), int(y * scale_factor_true)
         draw_cross(img, (x, y), (0, 255, 0))  # Green color for true points
 
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -109,7 +113,6 @@ def main():
     model = config['inference']['net']
     model.eval()  # Set the model to evaluation mode
 
-
     for i, (img_tensor, true_points) in enumerate(test_loader):
         # Perform inference and extract keypoints
         preds = do_inference(img_tensor, model)
@@ -122,6 +125,34 @@ def main():
 
         # Draw predictions and save the image
         draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
+
+
+
+    for i, (img_tensor, true_points) in enumerate(test_loader):
+        # Perform inference and extract keypoints
+        preds = do_inference(img_tensor, model)
+        pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
+
+        # Scale pred_keypoints to [0, 1] range
+        scale_down_factor = 1.0/config['train']['output_res']
+        pred_keypoints_scaled = pred_keypoints.clone()
+        pred_keypoints_scaled[:, :, :2] *= scale_down_factor
+
+        # Compute mean squared error
+        mse = torch.mean((pred_keypoints_scaled - true_points.clone()[0]) ** 2).item()
+
+        # Generate a unique save path for each image
+        save_dir = '/content/drive/MyDrive/point_localization/exps/'
+        save_path = os.path.join(save_dir, f'img_{i}.png')
+        
+        # Draw predictions and save the image
+        draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
+
+        print(f"MSE for image {save_path}: {mse}")
+
+
+
+
 
 if __name__ == '__main__':
     main()

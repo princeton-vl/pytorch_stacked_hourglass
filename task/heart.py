@@ -20,12 +20,11 @@ __config__ = {
         'oup_dim': 6,
         'num_parts': 6,
         'increase': 0,
-        'keys': ['imgs'],
-        'num_eval': 500, ## number of val examples used. entire set is 2958
-        'train_num_eval': 300, ## number of train examples tested at test time
+        'keys': ['imgs']
     },
 
     'train': {
+        'epoch_num': 10,
         'batchsize': 16,
         'input_res': 256,
         'output_res': 64,
@@ -73,30 +72,15 @@ class Trainer(nn.Module):
             # print(f"eric: >>$$$ {labels.keys()}")  >  dict_keys(['heatmaps'])
             true_heatmaps = labels['heatmaps']
             loss = self.calc_loss(combined_hm_preds, true_heatmaps)
-            # print(f"ERIC 1: {type(combined_hm_preds)}, {type(loss)}, {type(labels)}") # >> list, Tensor
-            # # print(f"ERIC 2: {combined_hm_preds[0].shape}, {loss.shape}") >> [16,2,6,64,64], [16,2]
-            
-            # # #save_heatmaps_for_debug(combined_hm_preds, **labels)  
-            # heatmaps = true_heatmaps.cpu().numpy()  # shape (bs,6,64,64)
-
-            # # Plotting and saving the heatmaps
-            # # print(f"johnny: num_keypoints = {heatmaps.shape}")
-            # num_keypoints = heatmaps[0].shape[0]
-            # for i in range(num_keypoints):
-            #     plt.figure()
-            #     plt.imshow(heatmaps[0][i], cmap='hot', interpolation='nearest')
-            #     plt.axis('off')  # Turn off the axis
-
-            #     # Define save path for each heatmap
-            #     save_path = f'/content/drive/MyDrive/point_localization/exps/hm_{i+1}.png'
-            #     plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
-            #     plt.close()
 
             return list(combined_hm_preds) + list([loss])
 
-def make_network(configs):
+def make_network(configs, wandb_config=None):
     train_cfg = configs['train']
     config = configs['inference']
+
+    learning_rate = wandb_config.learning_rate if wandb_config else train_cfg['learning_rate']
+    train_cfg['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['net'].parameters()), lr=learning_rate)
 
     def calc_loss(*args, **kwargs):
         return poseNet.calc_loss(*args, **kwargs)
@@ -110,8 +94,6 @@ def make_network(configs):
     config['net'] = Trainer(forward_net, configs['inference']['keys'], calc_loss)
     
     ## optimizer, experiment setup
-    train_cfg['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad,config['net'].parameters()), train_cfg['learning_rate'])
-
     exp_path = os.path.join('exp', configs['opt'].exp)
     if configs['opt'].exp=='pose' and configs['opt'].continue_exp is not None:
         exp_path = os.path.join('exp', configs['opt'].continue_exp)
@@ -169,7 +151,7 @@ def make_network(configs):
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = config['train']['decay_lr']
 
-            return None
+            return {"loss": total_loss, "predictions": predictions}
 
         else:
             out = {}
