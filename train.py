@@ -33,7 +33,7 @@ sweep_config = {
         'goal': 'minimize'   
     },
     'parameters': {
-        'learning_rate': {
+        'lr': {
             'min': 0.001,
             'max': 0.1
         },
@@ -51,7 +51,11 @@ def reload(config):
     opt = config['opt']
     #resume = os.path.join('exp', opt.continue_exp)
     resume = '/content/drive/MyDrive/point_localization/exps'
-    resume_file = os.path.join(resume, 'checkpoint.pt')
+    if config['opt'].continue_exp is not None:  # don't overwrite the original exp I guess ??
+        resume = os.path.join(resume, config['opt'].continue_exp)
+    else:
+        resume = os.path.join(resume, config['opt'].exp)
+    resume_file = os.path.join(resume, f'checkpoint_{config.lr}_{config.bs}.pt')
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
 
     if os.path.isfile(resume_file):
@@ -84,7 +88,7 @@ def save(config):
     resume = '/content/drive/MyDrive/point_localization/exps'
     if config['opt'].continue_exp is not None:  # don't overwrite the original exp I guess ??
         resume = os.path.join(resume, config['opt'].continue_exp)
-    resume_file = os.path.join(resume, 'checkpoint.pt')
+    resume_file = os.path.join(resume, f'checkpoint_{config.lr}_{config.bs}.pt')
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
     
     save_checkpoint({
@@ -136,7 +140,8 @@ def train(task, config, post_epoch=None):
                 datas = {'imgs': images, 'heatmaps': heatmaps}
                 outs = train_func(i, config, phase, **datas)
                 if phase != 'inference':
-                    wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item()})
+                    wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item(),\
+                               "lr": config.lr, "bs": config.bs})
 
         config['train']['epoch'] += 1
         save(config)

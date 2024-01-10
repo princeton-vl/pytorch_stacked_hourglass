@@ -30,7 +30,6 @@ __config__ = {
         'output_res': 64,
         'train_iters': 1000,
         'valid_iters': 10,
-        'learning_rate': 2e-3,
         'max_num_people' : 1,
         'loss': [
             ['combined_hm_loss', 1],
@@ -79,7 +78,7 @@ def make_network(configs, wandb_config=None):
     train_cfg = configs['train']
     config = configs['inference']
 
-    learning_rate = wandb_config.learning_rate if wandb_config else train_cfg['learning_rate']
+    learning_rate = wandb_config.lr if wandb_config else train_cfg['lr']
     train_cfg['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['net'].parameters()), lr=learning_rate)
 
     def calc_loss(*args, **kwargs):
