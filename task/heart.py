@@ -25,7 +25,8 @@ __config__ = {
 
     'train': {
         'epoch_num': 10,
-        'batchsize': 16,
+        'learning_rate': 2e-3,
+        'batch_size': 16,
         'input_res': 256,
         'output_res': 64,
         'train_iters': 1000,
@@ -74,12 +75,9 @@ class Trainer(nn.Module):
 
             return list(combined_hm_preds) + list([loss])
 
-def make_network(configs, wandb_config=None):
+def make_network(configs):# wandb_config=None):
     train_cfg = configs['train']
     config = configs['inference']
-
-    learning_rate = wandb_config.lr if wandb_config else train_cfg['lr']
-    train_cfg['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['net'].parameters()), lr=learning_rate)
 
     def calc_loss(*args, **kwargs):
         return poseNet.calc_loss(*args, **kwargs)
@@ -91,11 +89,17 @@ def make_network(configs, wandb_config=None):
     if torch.cuda.device_count() > 1:
         forward_net = DataParallel(forward_net)
     config['net'] = Trainer(forward_net, configs['inference']['keys'], calc_loss)
+
+    learning_rate = train_cfg['learning_rate']
+    train_cfg['optimizer'] = torch.optim.Adam(filter(lambda p: p.requires_grad, config['net'].parameters()), lr=learning_rate)
     
     ## optimizer, experiment setup
-    exp_path = os.path.join('exp', configs['opt'].exp)
-    if configs['opt'].exp=='pose' and configs['opt'].continue_exp is not None:
-        exp_path = os.path.join('exp', configs['opt'].continue_exp)
+    exp_path = '/content/drive/MyDrive/point_localization/exps'
+    if config['opt'].continue_exp is not None:  # don't overwrite the original exp I guess ??
+        exp_path = os.path.join(exp_path, config['opt'].continue_exp)
+    else:
+        exp_path = os.path.join(exp_path, config['opt'].exp)
+
     if not os.path.exists(exp_path):
         os.mkdir(exp_path)
     logger = open(os.path.join(exp_path, 'log'), 'a+')
@@ -148,7 +152,7 @@ def make_network(configs, wandb_config=None):
             # Learning rate decay
             if batch_id == config['train']['decay_iters']:
                 for param_group in optimizer.param_groups:
-                    param_group['lr'] = config['train']['decay_lr']
+                    param_group['learning_rate'] = config['train']['decay_lr']
 
             return {"loss": total_loss, "predictions": predictions}
 

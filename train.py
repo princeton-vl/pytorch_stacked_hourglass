@@ -19,7 +19,7 @@ from models.layers import Hourglass
 def parse_command_line():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--continue_exp', type=str, help='continue exp')
-    parser.add_argument('-e', '--exp', type=str, default='pose', help='experiments name')
+    parser.add_argument('-e', '--exp', type=str, default='heart', help='experiments name')
     parser.add_argument('-m', '--max_iters', type=int, default=250, help='max number of iterations (thousands)')
     parser.add_argument('-p', '--pretrained_model', type=str, help='path to pretrained model')
     parser.add_argument('-o', '--only10', type=bool, default=False, help='only use 10 images')
@@ -33,7 +33,7 @@ sweep_config = {
         'goal': 'minimize'   
     },
     'parameters': {
-        'lr': {
+        'learning_rate': {
             'min': 0.001,
             'max': 0.1
         },
@@ -55,7 +55,7 @@ def reload(config):
         resume = os.path.join(resume, config['opt'].continue_exp)
     else:
         resume = os.path.join(resume, config['opt'].exp)
-    resume_file = os.path.join(resume, f'checkpoint_{config.lr}_{config.bs}.pt')
+    resume_file = os.path.join(resume, f'checkpoint_{config.learning_rate}_{config.batch_size}.pt')
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
 
     if os.path.isfile(resume_file):
@@ -90,7 +90,7 @@ def save(config):
         resume = os.path.join(resume, config['opt'].continue_exp)
     else:
         resume = os.path.join(resume, config['opt'].exp)
-    resume_file = os.path.join(resume, f'checkpoint_{config.lr}_{config.bs}.pt')
+    resume_file = os.path.join(resume, f'checkpoint_{config.learning_rate}_{config.batch_size}.pt')
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
     
     save_checkpoint({
@@ -100,15 +100,8 @@ def save(config):
         }, False, filename=resume_file)
     print('=> save checkpoint')
 
-def train(task, config, post_epoch=None):
-    wandb.init(config=config)
-    config = wandb.config
-
-    train_func = task.make_network(config, wandb.config)
-    reload(config)
-
-    if 'epoch' not in config['train']:
-        config['train']['epoch'] = 0
+def train(train_func, config, post_epoch=None):
+    
     batch_size = config.batch_size  # Example of using a hyperparameter
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
@@ -134,6 +127,12 @@ def train(task, config, post_epoch=None):
         for phase in ['train', 'valid']:
             loader = train_loader if phase == 'train' else valid_loader
             num_step = len(loader)
+
+            #########################
+            print(type(config['opt']))
+            print(config['opt'])
+
+
             print('start', phase, config['opt'].exp)
 
             show_range = tqdm.tqdm(range(num_step), total=num_step, ascii=True)
@@ -143,37 +142,41 @@ def train(task, config, post_epoch=None):
                 outs = train_func(i, config, phase, **datas)
                 if phase != 'inference':
                     wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item(),\
-                               "lr": config.lr, "bs": config.bs})
+                               "learning_rate": config.learning_rate, "batch_size": config.batch_size})
 
         config['train']['epoch'] += 1
         save(config)
 
-    wandb.finish()
 
 def init():
     opt = parse_command_line()
     task = importlib.import_module('task.heart')
-    exp_path = os.path.join('exp', opt.exp)
     
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
     config = task.__config__
-    try: os.makedirs(exp_path)
-    except FileExistsError: pass
 
     config['opt'] = opt
-    config['data_provider'] = importlib.import_module(config['data_provider'])
+    wandb.init(config=config)
+    config = wandb.config
 
-    return task, config
+    train_func = task.make_network(wandb.config)#config, wandb.config)
+    reload(config)
+
+    if 'epoch' not in config['train']:
+        config['train']['epoch'] = 0
+
+    return train_func, config
 
 # def main():
-#     print(datetime.now(timezone('PST')))
-#     func, train_loader, valid_loader, config = init()
-#     train(func, train_loader, valid_loader, config)
+#     train_func, config = init()
+#     train(train_func, config)
 
 def train_with_wandb(config=None):
-    func, config = init()
-    train(func, config)
+    train_func, config = init()
+    train(train_func, config)
+    wandb.finish()
 
 if __name__ == '__main__':
+    # main()
     sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
     wandb.agent(sweep_id, train_with_wandb)

@@ -148,7 +148,7 @@ def make_network(configs):
             if batch_id == config['train']['decay_iters']:
                 ## decrease the learning rate after decay # iterations
                 for param_group in optimizer.param_groups:
-                    param_group['lr'] = config['train']['decay_lr']
+                    param_group['learning_rate'] = config['train']['decay_lr']
             
             return None
         else:

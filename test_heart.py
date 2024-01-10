@@ -118,21 +118,6 @@ def main():
         preds = do_inference(img_tensor, model)
         pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
 
-        # Generate a unique save path for each image
-        # Change the base directory as per your requirement
-        save_dir = '/content/drive/MyDrive/point_localization/exps/'
-        save_path = os.path.join(save_dir, f'img_{i}.png')
-
-        # Draw predictions and save the image
-        draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
-
-
-
-    for i, (img_tensor, true_points) in enumerate(test_loader):
-        # Perform inference and extract keypoints
-        preds = do_inference(img_tensor, model)
-        pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
-
         # Scale pred_keypoints to [0, 1] range
         scale_down_factor = 1.0/config['train']['output_res']
         pred_keypoints_scaled = pred_keypoints.clone()
@@ -149,9 +134,6 @@ def main():
         draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
 
         print(f"MSE for image {save_path}: {mse}")
-
-
-
 
 
 if __name__ == '__main__':
