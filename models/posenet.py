@@ -75,24 +75,4 @@ class PoseNet(nn.Module):
         combined_loss = torch.stack(combined_loss, dim=1)
         # print(f"combined_loss shape: {combined_loss[0].shape}")
 
-
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
-        # Convert the tensors to numpy for visualization
-        pred = combined_hm_preds[0][0][0][0].detach().cpu().numpy()
-        target = heatmaps[0][0].detach().cpu().numpy()
-
-        # Visualize the prediction
-        axes[0].imshow(pred, cmap='hot', interpolation='nearest')
-        axes[0].set_title('Predicted Heatmap')
-
-        # Visualize the target
-        axes[1].imshow(target, cmap='hot', interpolation='nearest')
-        axes[1].set_title('Target Heatmap')
-
-        plt.savefig('/content/drive/MyDrive/point_localization/exps/hm0.0.png')
-
-
-
-
         return combined_loss
