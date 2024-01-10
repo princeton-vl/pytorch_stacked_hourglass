@@ -88,6 +88,8 @@ def save(config):
     resume = '/content/drive/MyDrive/point_localization/exps'
     if config['opt'].continue_exp is not None:  # don't overwrite the original exp I guess ??
         resume = os.path.join(resume, config['opt'].continue_exp)
+    else:
+        resume = os.path.join(resume, config['opt'].exp)
     resume_file = os.path.join(resume, f'checkpoint_{config.lr}_{config.bs}.pt')
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
     
