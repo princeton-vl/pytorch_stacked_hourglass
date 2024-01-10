@@ -67,9 +67,6 @@ def reload(config):
                   .format(resume_file, checkpoint['epoch']))
     else:
         print("=> no checkpoint found at '{}'".format(resume_file))
-    
-    if 'epoch' not in config['train']:
-        config['train']['epoch'] = 0
 
 def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """
@@ -104,6 +101,8 @@ def train(task, config, post_epoch=None):
     train_func = task.make_network(config, wandb.config)
     reload(config)
 
+    if 'epoch' not in config['train']:
+        config['train']['epoch'] = 0
     batch_size = config.batch_size  # Example of using a hyperparameter
 
     train_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Train'
