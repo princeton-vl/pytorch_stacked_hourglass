@@ -180,7 +180,7 @@ def main():
     opt = parse_command_line()  # Moved to main()
     task, config = init(opt)
     
-    if opt['use_wandb']:
+    if config['opt']['use_wandb']:
         sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
         wandb.agent(sweep_id, lambda: train_with_wandb(opt, task, config))
     else:
