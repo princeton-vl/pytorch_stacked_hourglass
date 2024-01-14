@@ -102,7 +102,7 @@ def save(config):
             'optimizer' : config['train']['optimizer'].state_dict(),
             'epoch': config['train']['epoch'],
         }, False, filename=resume_file)
-    print('=> save checkpoint')
+    print(f'=> save checkpoint at {resume_file}')
 
 def train(train_func, config, post_epoch=None):
     
@@ -133,9 +133,8 @@ def train(train_func, config, post_epoch=None):
             num_step = len(loader)
 
             #########################
-            print(type(config['opt']))
-            print(config['opt'])
-
+            # print(type(config['opt']))
+            # print(config['opt'])
 
             print('start', phase, config['opt']['exp'])
 
@@ -169,11 +168,11 @@ def train_with_wandb(opt, task, config):
     config_copy = copy.deepcopy(config)
     wandb.init(config=config_copy)
 
-    config.update(wandb.config)
+    config_copy.update(wandb.config)
 
-    train_func = task.make_network(config)
-    reload(config)
-    train(train_func, config)
+    train_func = task.make_network(config_copy)
+    reload(config_copy)
+    train(train_func, config_copy)
     wandb.finish()
 
 def main():
@@ -182,7 +181,7 @@ def main():
     
     if config['opt']['use_wandb']:
         sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
-        wandb.agent(sweep_id, lambda: train_with_wandb(opt, task, config))
+        wandb.agent(sweep_id, lambda: train_with_wandb(opt, task, copy.deepcopy(config)))
     else:
         train_func = task.make_network(config)
         reload(config)
@@ -190,3 +189,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+    ################ 
+    # SET USE_WANDB !!!!!
+    ###############
