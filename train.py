@@ -36,15 +36,17 @@ sweep_config = {
     },
     'parameters': {
         'learning_rate': {
-            'min': 0.001,
-            'max': 0.1
+            'min': 0.0001,
+            'max': 0.01
         },
         'batch_size': {
-            'values': [16, 32, 64, 128]
+            'values': [16, 32, 64]
         },
         # Add other hyperparameters here
-    }
+    },
+    'total_runs': 10  # Specify the total number of runs here
 }
+
     
 def reload(config):
     """
@@ -58,7 +60,10 @@ def reload(config):
     else:
         resume = os.path.join(resume, config['opt']['exp'])
     lr_, bs_, = config['train']['learning_rate'], config['train']['batch_size']
+    ###################################################################
     resume_file = os.path.join(resume, f'checkpoint_{lr_}_{bs_}.pt')
+    # eric: make sure wandb isn't running all the same hyperparams across different runs
+    ###################################################################
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
 
     if os.path.isfile(resume_file):
@@ -129,6 +134,7 @@ def train(train_func, config, post_epoch=None):
                 break
 
         for phase in ['train', 'valid']:
+            if phase == 'valid' and config['train']['epoch'] % 9 != 0: continue # only validate every 4 epochs
             loader = train_loader if phase == 'train' else valid_loader
             num_step = len(loader)
 
@@ -143,7 +149,7 @@ def train(train_func, config, post_epoch=None):
                 images, heatmaps = next(iter(loader))
                 datas = {'imgs': images, 'heatmaps': heatmaps}
                 outs = train_func(i, config, phase, **datas)
-                if config['opt']['use_wandb']:
+                if config['opt']['use_wandb'] and phase == 'train':
                     wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item(),\
                                "learning_rate": config['train']['learning_rate'], "batch_size": config['train']['batch_size']})
 
@@ -159,21 +165,26 @@ def init(opt):
     opt_dict = vars(opt)
 
     config['opt'] = opt_dict
-    if 'epoch' not in config['train']:
-        config['train']['epoch'] = 0
+    config['train']['epoch'] = 0
     return task, config
 
-def train_with_wandb(opt, task, config):
-    # task and config are now passed as arguments
+def train_with_wandb(task, config):
     config_copy = copy.deepcopy(config)
+    config_copy['train']['epoch'] = 0
     wandb.init(config=config_copy)
 
-    config_copy.update(wandb.config)
+    # Manually update the learning rate and batch size from wandb.config
+    config_copy['train']['learning_rate'] = wandb.config.get('learning_rate', config_copy['train']['learning_rate'])
+    config_copy['train']['batch_size'] = wandb.config.get('batch_size', config_copy['train']['batch_size'])
+
+    print(f"Updated learning rate: {config_copy['train']['learning_rate']}")
+    print(f"Updated batch size: {config_copy['train']['batch_size']}")
 
     train_func = task.make_network(config_copy)
     reload(config_copy)
     train(train_func, config_copy)
     wandb.finish()
+
 
 def main():
     opt = parse_command_line()  # Moved to main()
@@ -181,7 +192,7 @@ def main():
     
     if config['opt']['use_wandb']:
         sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
-        wandb.agent(sweep_id, lambda: train_with_wandb(opt, task, copy.deepcopy(config)))
+        wandb.agent(sweep_id, lambda: train_with_wandb(task, config))
     else:
         train_func = task.make_network(config)
         reload(config)
@@ -189,7 +200,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    ################ 
-    # SET USE_WANDB !!!!!
-    ###############
