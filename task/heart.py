@@ -25,8 +25,8 @@ __config__ = {
 
     'train': {
         'epoch_num': 10,
-        # 'learning_rate': 2e-3,
-        # 'batch_size': 16,
+        'learning_rate': 2e-3,
+        'batch_size': 16,
         'input_res': 256,
         'output_res': 64,
         'train_iters': 1000,
