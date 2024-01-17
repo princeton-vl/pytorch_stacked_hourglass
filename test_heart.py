@@ -83,25 +83,18 @@ def extract_keypoints_from_heatmaps(config, heatmaps):
 
 
 def main():
-    from train import init
-    func, config = init()
+    from train import init, reload
+    
+    opt = train.parse_command_line()  # Correctly reference 'train' for the function
+    task, config = init(opt)
 
-    # # ERIC: Assuming the path to your pretrained model
-    # pretrained_model_path = '/content/drive/MyDrive/point_localization/stacked_hourglass_point_localization/exp/hourglass_01/checkpoint.pt'
-    # config['opt']['pretrained_model'] = pretrained_model_path
-
-    opt = config['opt']
-    if ['pretrained_model'] and os.path.isfile(['pretrained_model']):  # Check if pretrained model path is provided
-        print("=> loading pretrained model '{}'".format(['pretrained_model']))
-        checkpoint = torch.load(['pretrained_model'])
-        # state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
-        # config['inference']['net'].load_state_dict(state_dict)
+    pretrained_model_path = '/content/drive/MyDrive/point_localization/exps/hg2_real/checkpoint_2.133e-05_8.pt'
+    if os.path.isfile(pretrained_model_path):  # Correctly check if the pretrained model exists
+        print("=> loading pretrained model '{}'".format(pretrained_model_path))
+        checkpoint = torch.load(pretrained_model_path)
         state_dict = {k.replace('model.module.', 'model.'): v for k, v in checkpoint['state_dict'].items()}
-        config['inference']['net'].load_state_dict(state_dict, strict=True)
+        config['inference']['net'].load_state_dict(state_dict, strict=False)  # Set strict=False if the model architectures are not exactly the same
 
-    # Load or initialize the model's parameters
-    # hg_dir = '/Users/ewern/Desktop/code/MetronMind/stacked_hourglass_point_localization/'
-    # chkpt_path = os.path.join(hg_dir, 'models/local_models/checkpoint.pt')
     test_dir = '/content/drive/MyDrive/point_localization/VHS-Top-5286-Eric/Test'
     
     im_sz = config['inference']['inp_dim']
@@ -114,27 +107,21 @@ def main():
     model.eval()  # Set the model to evaluation mode
 
     for i, (img_tensor, true_points) in enumerate(test_loader):
-        # Perform inference and extract keypoints
         preds = do_inference(img_tensor, model)
         pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
 
-        # Scale pred_keypoints to [0, 1] range
         scale_down_factor = 1.0/config['train']['output_res']
         pred_keypoints_scaled = pred_keypoints.clone()
         pred_keypoints_scaled[:, :, :2] *= scale_down_factor
 
-        # Compute mean squared error
         mse = torch.mean((pred_keypoints_scaled - true_points.clone()[0]) ** 2).item()
 
-        # Generate a unique save path for each image
         save_dir = '/content/drive/MyDrive/point_localization/exps/'
         save_path = os.path.join(save_dir, f'img_{i}.png')
         
-        # Draw predictions and save the image
         draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)
 
         print(f"MSE for image {save_path}: {mse}")
-
 
 if __name__ == '__main__':
     main()
