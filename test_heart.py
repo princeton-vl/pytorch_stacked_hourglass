@@ -83,9 +83,9 @@ def extract_keypoints_from_heatmaps(config, heatmaps):
 
 
 def main():
-    from train import init, reload
+    from train import init, reload, parse_command_line
     
-    opt = train.parse_command_line()  # Correctly reference 'train' for the function
+    opt = parse_command_line()  # Correctly reference 'train' for the function
     task, config = init(opt)
 
     pretrained_model_path = '/content/drive/MyDrive/point_localization/exps/hg2_real/checkpoint_2.133e-05_8.pt'
