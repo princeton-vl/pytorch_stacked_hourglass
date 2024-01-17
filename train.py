@@ -53,17 +53,20 @@ def reload(config):
     """
     opt = config['opt']
     #resume = os.path.join('exp', opt['continue_exp'])
-    resume = '/content/drive/MyDrive/point_localization/exps'
-    if config['opt']['continue_exp'] is not None:  # don't overwrite the original exp I guess ??
-        resume = os.path.join(resume, config['opt']['continue_exp'])
-    else:
-        resume = os.path.join(resume, config['opt']['exp'])
-    lr_, bs_, = config['train']['learning_rate'], config['train']['batch_size']
-    ###################################################################
-    resume_file = os.path.join(resume, f'checkpoint_{lr_}_{bs_}.pt')
+    # resume = '/content/drive/MyDrive/point_localization/exps'
+    # if config['opt']['continue_exp'] is not None:  # don't overwrite the original exp I guess ??
+    #     resume = os.path.join(resume, config['opt']['continue_exp'])
+    # else:
+    #     resume = os.path.join(resume, config['opt']['exp'])
+    # lr_, bs_, = config['train']['learning_rate'], config['train']['batch_size']
+    # ###################################################################
+    # resume_file = os.path.join(resume, f'checkpoint_{lr_}_{bs_}.pt')
     # eric: make sure wandb isn't running all the same hyperparams across different runs
     ###################################################################
     # resume_file = '/content/drive/MyDrive/point_localization/exps/checkpoint.pt'
+    #resume_file = '/content/drive/MyDrive/point_localization/exps/hg2_real/checkpoint_2.133e-05_8.pt'
+    if opt['pretrained_model'] is not None:
+        resume_file = opt['pretrained_model']
 
     if os.path.isfile(resume_file):
         print("=> loading checkpoint '{}'".format(resume_file))

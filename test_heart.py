@@ -89,6 +89,8 @@ def main():
     task, config = init(opt)
 
     pretrained_model_path = '/content/drive/MyDrive/point_localization/exps/hg2_real/checkpoint_2.133e-05_8.pt'
+    if opt['pretrained_model'] is not None:
+        pretrained_model_path = opt['pretrained_model']
     if os.path.isfile(pretrained_model_path):  # Correctly check if the pretrained model exists
         print("=> loading pretrained model '{}'".format(pretrained_model_path))
         checkpoint = torch.load(pretrained_model_path)
