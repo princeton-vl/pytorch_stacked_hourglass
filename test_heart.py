@@ -87,10 +87,11 @@ def main():
     
     opt = parse_command_line()  # Correctly reference 'train' for the function
     task, config = init(opt)
+    train_func = task.make_network(config)
 
     pretrained_model_path = '/content/drive/MyDrive/point_localization/exps/hg2_real/checkpoint_2.133e-05_8.pt'
-    if opt['pretrained_model'] is not None:
-        pretrained_model_path = opt['pretrained_model']
+    if config['opt']['pretrained_model'] is not None:
+        pretrained_model_path = config['opt']['pretrained_model']
     if os.path.isfile(pretrained_model_path):  # Correctly check if the pretrained model exists
         print("=> loading pretrained model '{}'".format(pretrained_model_path))
         checkpoint = torch.load(pretrained_model_path)
@@ -116,7 +117,7 @@ def main():
         pred_keypoints_scaled = pred_keypoints.clone()
         pred_keypoints_scaled[:, :, :2] *= scale_down_factor
 
-        mse = torch.mean((pred_keypoints_scaled - true_points.clone()[0]) ** 2).item()
+        mse = torch.mean((pred_keypoints_scaled[:,:,:2] - true_points.clone()[0]) ** 2).item()
 
         save_dir = '/content/drive/MyDrive/point_localization/exps/'
         save_path = os.path.join(save_dir, f'img_{i}.png')
