@@ -40,7 +40,7 @@ sweep_config = {
             'max': 0.002
         },
         'batch_size': {
-            'values': [16, 32]
+            'values': [2,4,8]
         },
         # Add other hyperparameters here
     }
