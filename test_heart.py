@@ -23,8 +23,8 @@ def do_inference(img_tensor, model):
 def draw_cross(img, center, color, size=1):
     """ Draw a small cross at the specified center point on the image. """
     x, y = center
-    cv2.line(img, (x - size, y-size), (x + size, y+size), color, .5)
-    cv2.line(img, (x+size, y - size), (x-size, y + size), color, .5)
+    cv2.line(img, (x - size, y-size), (x + size, y+size), color, 1)
+    cv2.line(img, (x+size, y - size), (x-size, y + size), color, 1)
 
 def draw_predictions(img_tensor, pred_keypoints, true_points, config, save_path=None):
     img = img_tensor.permute(1, 2, 0).cpu().numpy()  # CHW to HWC
@@ -38,6 +38,7 @@ def draw_predictions(img_tensor, pred_keypoints, true_points, config, save_path=
     scale_factor_true = config['inference']['inp_dim']
     # Draw predicted keypoints from each stack
     for stack in range(nstack):
+        if stack != nstack-1: continue
         for k in range(oup_dim):
             x, y, conf = pred_keypoints[stack, k]
             #print(f"abc: {x}, {y}")
@@ -114,12 +115,12 @@ def main():
         pred_keypoints = extract_keypoints_from_heatmaps(config, preds)
 
         scale_down_factor = 1.0/config['train']['output_res']
-        pred_keypoints_scaled = pred_keypoints.clone()
-        pred_keypoints_scaled[:, :, :2] *= scale_down_factor
+        pred_keypoints_scaled = pred_keypoints.clone().cpu()[:, :, :2]
+        pred_keypoints_scaled *= scale_down_factor
 
-        mse = torch.mean((pred_keypoints_scaled[:,:,:2] - true_points.clone()[0]) ** 2).item()
+        mse = torch.mean((pred_keypoints_scaled - true_points.clone()[0]) ** 2).item()
 
-        save_dir = '/content/drive/MyDrive/point_localization/exps/'
+        save_dir = '/content/drive/MyDrive/point_localization/exps/hg2_pics/'
         save_path = os.path.join(save_dir, f'img_{i}.png')
         
         draw_predictions(img_tensor[0], pred_keypoints, true_points, config, save_path=save_path)

@@ -68,19 +68,19 @@ def reload(config):
     if opt['pretrained_model'] is not None:
         resume_file = opt['pretrained_model']
 
-    if os.path.isfile(resume_file):
-        print("=> loading checkpoint '{}'".format(resume_file))
-        checkpoint = torch.load(resume_file)
-        
-        config['inference']['net'].load_state_dict(checkpoint['state_dict'])
-        if 'optimizer' in checkpoint:
-            config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
-        if 'epoch' in checkpoint:
-            config['train']['epoch'] = checkpoint['epoch']
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(resume_file, checkpoint['epoch']))
-    else:
-        print("=> no checkpoint found at '{}'".format(resume_file))
+        if os.path.isfile(resume_file):
+            print("=> loading checkpoint '{}'".format(resume_file))
+            checkpoint = torch.load(resume_file)
+            
+            config['inference']['net'].load_state_dict(checkpoint['state_dict'])
+            if 'optimizer' in checkpoint:
+                config['train']['optimizer'].load_state_dict(checkpoint['optimizer'])
+            if 'epoch' in checkpoint:
+                config['train']['epoch'] = checkpoint['epoch']
+                print("=> loaded checkpoint '{}' (epoch {})"
+                    .format(resume_file, checkpoint['epoch']))
+        else:
+            print("=> no checkpoint found at '{}'".format(resume_file))
 
 def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     """
