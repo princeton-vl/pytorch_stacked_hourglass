@@ -154,9 +154,12 @@ def train(train_func, config, post_epoch=None):
                 if config['opt']['use_wandb'] and phase == 'train':
                     wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item(),\
                                "learning_rate": config['train']['learning_rate'], "batch_size": config['train']['batch_size']})
+                current_loss = outs["loss"].item()
+            if current_loss < config['train']['lowest_loss']:
+                config['train']['lowest_loss'] = current_loss
+                save(config)
 
         config['train']['epoch'] += 1
-        save(config)
 
 
 def init(opt):
@@ -168,6 +171,7 @@ def init(opt):
 
     config['opt'] = opt_dict
     config['train']['epoch'] = 0
+    config['train']['lowest_loss'] = float('inf')
     return task, config
 
 def train_with_wandb(task, config):
