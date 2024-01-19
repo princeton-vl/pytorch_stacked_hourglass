@@ -15,7 +15,7 @@ __config__ = {
     'data_provider': 'data.MPII.dp',
     'network': 'models.posenet.PoseNet',
     'inference': {
-        'nstack': 2,
+        'nstack': 8,
         'inp_dim': 256,
         'oup_dim': 6,
         'num_parts': 6,
@@ -24,9 +24,9 @@ __config__ = {
     },
 
     'train': {
-        'epoch_num': 10,
-        'learning_rate': .00002133,
-        'batch_size': 8,
+        'epoch_num': 300,
+        'learning_rate': .0001,#02133,
+        'batch_size': 4,
         'input_res': 256,
         'output_res': 64,
         'train_iters': 1000,
