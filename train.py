@@ -25,6 +25,7 @@ def parse_command_line():
     parser.add_argument('-p', '--pretrained_model', type=str, help='path to pretrained model')
     parser.add_argument('-o', '--only10', type=bool, default=False, help='only use 10 images')
     parser.add_argument('-w', '--use_wandb', type=bool, default=False, help='log in wandb')
+    parser.add_argument('-s', '--no_sweep', action='store_true', help='track run without using sweep_config')
     args = parser.parse_args()
     return args
 
@@ -193,16 +194,27 @@ def train_with_wandb(task, config):
 
 
 def main():
-    opt = parse_command_line()  # Moved to main()
+    opt = parse_command_line()  # Parse command line arguments
     task, config = init(opt)
-    
-    if config['opt']['use_wandb']:
-        sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
-        wandb.agent(sweep_id, lambda: train_with_wandb(task, config))
+
+    if opt.use_wandb:
+        if opt.no_sweep:
+            # Track the run without a sweep
+            wandb.init(project="2hg-hyperparam-sweep", config=config)
+            train_func = task.make_network(config)
+            reload(config)
+            train(train_func, config)
+            wandb.finish()
+        else:
+            # Use sweep
+            sweep_id = wandb.sweep(sweep_config, project="2hg-hyperparam-sweep")
+            wandb.agent(sweep_id, lambda: train_with_wandb(task, config))
     else:
+        # Proceed without WandB
         train_func = task.make_network(config)
         reload(config)
         train(train_func, config)
+
 
 if __name__ == '__main__':
     main()
