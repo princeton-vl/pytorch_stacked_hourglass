@@ -23,7 +23,7 @@ class PoseNet(nn.Module):
         
         self.nstack = nstack
         self.pre = nn.Sequential(
-            Conv(3, 64, 7, 2, bn=True, relu=True),
+            Conv(1, 64, 7, 2, bn=True, relu=True),
             Residual(64, 128),
             Pool(2, 2),
             Residual(128, 128),

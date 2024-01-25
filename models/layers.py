@@ -1,4 +1,5 @@
 from torch import nn
+import torch.nn.functional as F
 
 Pool = nn.MaxPool2d
 
@@ -77,10 +78,12 @@ class Hourglass(nn.Module):
         self.up2 = nn.Upsample(scale_factor=2, mode='nearest')
 
     def forward(self, x):
-        up1  = self.up1(x)
+        up1 = self.up1(x)
         pool1 = self.pool1(x)
         low1 = self.low1(pool1)
         low2 = self.low2(low1)
         low3 = self.low3(low2)
-        up2  = self.up2(low3)
+        # Explicitly specifying the output size for upsampling
+        up2 = F.interpolate(low3, size=up1.shape[2:], mode='nearest')
+
         return up1 + up2

@@ -12,6 +12,7 @@ import scipy.ndimage as ndimage
 
 # Assuming TF refers to torchvision.transforms.functional
 import torchvision.transforms.functional as TF
+import torch.nn.functional as F
 
 class CoordinateDataset(Dataset):
     def __init__(self, root_dir, im_sz, output_res, augment=False, num_workers=32, only10=False, testing=False):
@@ -38,10 +39,12 @@ class CoordinateDataset(Dataset):
             image, points = custom_transform(image, points)
 
         image_tensor = transforms.Compose([
-            transforms.Resize((self.im_sz, self.im_sz)),
-            transforms.Grayscale(num_output_channels=3),
+            # transforms.Resize((self.im_sz, self.im_sz)),
+            # transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
         ])(image)
+
+        image_tensor = F.pad(image_tensor, (0, 1, 0, 1), value=0)
 
         heatmaps = self.generate_heatmaps(points, self.output_res)
 
