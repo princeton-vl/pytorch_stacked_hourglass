@@ -151,14 +151,23 @@ def train(train_func, config, post_epoch=None):
             for i in show_range:
                 images, heatmaps = next(iter(loader))
                 datas = {'imgs': images, 'heatmaps': heatmaps}
-                outs = train_func(i, config, phase, **datas)
+                loss_outputs = train_func(i, config, phase, **datas)
+
                 if config['opt']['use_wandb'] and phase == 'train':
-                    wandb.log({"epoch": config['train']['epoch'], "loss": outs["loss"].item(),\
-                               "learning_rate": config['train']['learning_rate'], "batch_size": config['train']['batch_size']})
-                current_loss = outs["loss"].item()
-            if current_loss < config['train']['lowest_loss']:
-                config['train']['lowest_loss'] = current_loss
-                save(config)
+                    wandb.log({
+                        "epoch": config['train']['epoch'],
+                        "total_loss": loss_outputs["total_loss"].item(),
+                        "basic_loss": loss_outputs["basic_loss"].item(),
+                        "focused_loss": loss_outputs["focused_loss"].item(),
+                        "learning_rate": config['train']['learning_rate'],
+                        "batch_size": config['train']['batch_size']
+                    })
+
+                current_loss = loss_outputs["total_loss"].item()
+                if current_loss < config['train']['lowest_loss']:
+                    config['train']['lowest_loss'] = current_loss
+                    save(config)
+
 
         config['train']['epoch'] += 1
 
