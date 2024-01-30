@@ -66,26 +66,25 @@ class PoseNet(nn.Module):
     #     l = l.mean(dim=3).mean(dim=2).mean(dim=1)
     #     return l
 def calc_loss(self, combined_hm_preds, heatmaps):
-    total_losses = []
-    basic_losses = []
-    focused_losses = []
+    combined_total_loss = []
+    combined_basic_loss = []
+    combined_focused_loss = []
 
     for i in range(self.nstack):
-        loss_output = self.heatmapLoss(combined_hm_preds[0][:,i], heatmaps)
-        total_losses.append(loss_output['total_loss'])
-        basic_losses.append(loss_output['basic_loss'])
-        focused_losses.append(loss_output['focused_loss'])
+        loss_outputs = self.heatmapLoss(combined_hm_preds[0][:,i], heatmaps)
+        combined_total_loss.append(loss_outputs["total_loss"])
+        combined_basic_loss.append(loss_outputs["basic_loss"])
+        combined_focused_loss.append(loss_outputs["focused_loss"])
 
-    # Stack the individual losses
-    total_loss = torch.stack(total_losses, dim=1)
-    basic_loss = torch.stack(basic_losses, dim=1)
-    focused_loss = torch.stack(focused_losses, dim=1)
+    # Stack the total, basic, and focused losses separately
+    combined_total_loss = torch.stack(combined_total_loss, dim=1)
+    combined_basic_loss = torch.stack(combined_basic_loss, dim=1)
+    combined_focused_loss = torch.stack(combined_focused_loss, dim=1)
 
-    # You can either return a dictionary of these losses
-    # or return the total loss if that's what your training loop expects
+    # Return a dictionary containing the combined losses
     return {
-        'total_loss': total_loss.mean(),
-        'basic_loss': basic_loss.mean(),
-        'focused_loss': focused_loss.mean()
+        "combined_total_loss": combined_total_loss,
+        "combined_basic_loss": combined_basic_loss,
+        "combined_focused_loss": combined_focused_loss
     }
 
