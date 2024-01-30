@@ -1,3 +1,4 @@
+import torch
 class HeatmapLoss(torch.nn.Module):
     def __init__(self, extra_weight=2.0):
         super(HeatmapLoss, self).__init__()
