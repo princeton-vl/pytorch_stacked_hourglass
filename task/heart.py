@@ -75,14 +75,13 @@ class Trainer(nn.Module):
 
             return list(combined_hm_preds) + list([loss])
 
-def make_network(configs):# wandb_config=None):
+def make_network(configs):
     train_cfg = configs['train']
     config = configs['inference']
 
     def calc_loss(*args, **kwargs):
         return poseNet.calc_loss(*args, **kwargs)
     
-    ## creating new posenet
     PoseNet = importNet(configs['network'])
     poseNet = PoseNet(**config)
     forward_net = poseNet.cuda()

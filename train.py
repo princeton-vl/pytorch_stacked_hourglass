@@ -137,13 +137,9 @@ def train(train_func, config, post_epoch=None):
                 break
 
         for phase in ['train', 'valid']:
-            if phase == 'valid' and config['train']['epoch'] % 9 != 0: continue # only validate every 4 epochs
+            if phase == 'valid' and config['train']['epoch'] % 9 != 0: continue  # only validate every 4 epochs
             loader = train_loader if phase == 'train' else valid_loader
             num_step = len(loader)
-
-            #########################
-            # print(type(config['opt']))
-            # print(config['opt'])
 
             print('start', phase, config['opt']['exp'])
 
