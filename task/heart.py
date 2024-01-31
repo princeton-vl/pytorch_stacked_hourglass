@@ -69,7 +69,6 @@ class Trainer(nn.Module):
             combined_hm_preds = self.model(imgs, **inps)
             if type(combined_hm_preds)!=list and type(combined_hm_preds)!=tuple:
                 combined_hm_preds = [combined_hm_preds]
-            # print(f"eric: >>$$$ {labels.keys()}")  >  dict_keys(['heatmaps'])
             true_heatmaps = labels['heatmaps']
             loss = self.calc_loss(combined_hm_preds, true_heatmaps)
 
@@ -80,8 +79,9 @@ def make_network(configs):
     config = configs['inference']
 
     def calc_loss(*args, **kwargs):
-        loss = poseNet.calc_loss(*args, **kwargs)
-        return {"total_loss": loss}
+        return poseNet.calc_loss(*args, **kwargs)
+        # loss = poseNet.calc_loss(*args, **kwargs)
+        # return {"total_loss": loss}
     
     PoseNet = importNet(configs['network'])
     poseNet = PoseNet(**config)
@@ -123,12 +123,20 @@ def make_network(configs):
             for module in net.modules():
                 if isinstance(module, nn.BatchNorm2d):
                     module.eval()
-
+#  ERIC: which phase is being used??
         if phase != 'inference':
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
             # Assuming result[0] are the predictions and result[1] are the losses
             predictions = result[0]
             losses_per_stack = result[1]
+
+            # toprint2 = f"result type: {type(result)}"
+            # toprint3 = f"result length: {len(result)}"
+            # toprint = f"keys: {losses_per_stack.keys()}"
+            # logger.write(toprint)
+            # logger.write(toprint2)
+            # logger.write(toprint3)
+            # logger.flush()
 
             # Aggregate loss across all stacks
             total_loss = losses_per_stack["combined_total_loss"].mean()
@@ -153,7 +161,6 @@ def make_network(configs):
             if batch_id == config['train']['decay_iters']:
                 for param_group in optimizer.param_groups:
                     param_group['learning_rate'] = config['train']['decay_lr']
-
             return {"loss": total_loss, "predictions": predictions}
 
         else:
