@@ -130,12 +130,12 @@ def make_network(configs):
             losses_per_stack = result[1]
 
             # Aggregate loss across all stacks
-            total_loss = losses_per_stack.mean()
+            total_loss = losses_per_stack["combined_total_loss"].mean()
 
             # Logging
             toprint = f'\n{batch_id}: Total Loss: {total_loss.item():.8f}\n'
-            for stack_idx in range(losses_per_stack.shape[1]):
-                stack_loss = losses_per_stack[:, stack_idx].mean()
+            for stack_idx in range(losses_per_stack["combined_total_loss"].shape[1]):
+                stack_loss = losses_per_stack["combined_total_loss"][:, stack_idx].mean()
                 toprint += f'Stack {stack_idx} Loss: {stack_loss.item():.8f}\n'
 
             logger.write(toprint)
