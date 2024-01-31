@@ -127,24 +127,28 @@ def make_network(configs):
         if phase != 'inference':
             result = net(inputs['imgs'], **{i:inputs[i] for i in inputs if i!='imgs'})
             # Assuming result[0] are the predictions and result[1] are the losses
-            predictions = result[0]
-            losses_per_stack = result[1]
+            combined_hm_preds = result[:-1]
+            loss_dict = result[-1]
 
-            # toprint2 = f"result type: {type(result)}"
-            # toprint3 = f"result length: {len(result)}"
-            # toprint = f"keys: {losses_per_stack.keys()}"
-            # logger.write(toprint)
-            # logger.write(toprint2)
-            # logger.write(toprint3)
-            # logger.flush()
+            combined_total_loss = loss_dict["combined_total_loss"]
+            combined_basic_loss = loss_dict["combined_basic_loss"]
+            combined_focused_loss = loss_dict["combined_focused_loss"]
+
+            toprint2 = f"a: {combined_basic_loss}"
+            toprint3 = f"b: {combined_focused_loss}"
+            toprint = f"c: {combined_total_loss}"
+            logger.write(toprint)
+            logger.write(toprint2)
+            logger.write(toprint3)
+            logger.flush()
 
             # Aggregate loss across all stacks
-            total_loss = losses_per_stack["combined_total_loss"].mean()
+            total_loss = combined_total_loss.mean()
 
             # Logging
             toprint = f'\n{batch_id}: Total Loss: {total_loss.item():.8f}\n'
-            for stack_idx in range(losses_per_stack["combined_total_loss"].shape[1]):
-                stack_loss = losses_per_stack["combined_total_loss"][:, stack_idx].mean()
+            for stack_idx in range(combined_total_loss.shape[1]):
+                stack_loss = combined_total_loss[:, stack_idx].mean()
                 toprint += f'Stack {stack_idx} Loss: {stack_loss.item():.8f}\n'
 
             logger.write(toprint)
@@ -161,7 +165,7 @@ def make_network(configs):
             if batch_id == config['train']['decay_iters']:
                 for param_group in optimizer.param_groups:
                     param_group['learning_rate'] = config['train']['decay_lr']
-            return {"loss": total_loss, "predictions": predictions}
+            return {"total_loss": total_loss, "predictions": combined_hm_preds}
 
         else:
             out = {}
