@@ -124,8 +124,13 @@ def train(train_func, config, post_epoch=None):
             if config['train']['epoch'] > config['train']['epoch_num']:
                 break
 
+        # Initialize or reset variables to track epoch-wise metrics if necessary
+
         for phase in ['train', 'valid']:
-            if phase == 'valid' and config['train']['epoch'] % 9 != 0: continue  # only validate every 4 epochs
+            # Correct the validation frequency as per your requirement
+            if phase == 'valid' and config['train']['epoch'] % 9 != 0:
+                continue  # Skip validation as per the condition
+
             loader = train_loader if phase == 'train' else valid_loader
             num_step = len(loader)
 
@@ -141,16 +146,17 @@ def train(train_func, config, post_epoch=None):
                     wandb.log({
                         "epoch": config['train']['epoch'],
                         "total_loss": train_outputs["total_loss"].item(),
+                        "basic_loss": train_outputs["basic_loss"].item(),
+                        "focused_loss": train_outputs["focused_loss"].item(),
                         "learning_rate": config['train']['learning_rate'],
                         "batch_size": config['train']['batch_size']
                     })
 
-                current_loss = train_outputs["total_loss"].item()
-                if current_loss < config['train']['lowest_loss']:
-                    config['train']['lowest_loss'] = current_loss
-                    save(config)
+        # Save model at the end of every epoch
+        print(f"Saving model at the end of epoch {config['train']['epoch']}")
+        save(config)
 
-
+        # Increment the epoch counter at the end of each epoch
         config['train']['epoch'] += 1
 
 
