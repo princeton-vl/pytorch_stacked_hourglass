@@ -152,9 +152,7 @@ def train(train_func, config, post_epoch=None):
                 if config['opt']['use_wandb'] and phase == 'train':
                     wandb.log({
                         "epoch": config['train']['epoch'],
-                        "total_loss": loss_outputs["total_loss"].item(),
-                        "basic_loss": loss_outputs["basic_loss"].item(),
-                        "focused_loss": loss_outputs["focused_loss"].item(),
+                        "total_loss": loss_outputs["combined_total_loss"].item(),
                         "learning_rate": config['train']['learning_rate'],
                         "batch_size": config['train']['batch_size']
                     })

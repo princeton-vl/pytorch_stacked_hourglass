@@ -79,7 +79,7 @@ class PoseNet(nn.Module):
         # Stack the total, basic, and focused losses separately
         combined_total_loss = torch.stack(combined_total_loss, dim=1)
         combined_basic_loss = torch.stack(combined_basic_loss, dim=1)
-        combined_focused_loss = torch.stack(combined_focused_loss, dim=1)
+        combined_focused_loss = torch.stack(combined_focused_loss, dim=0)
 
         # Return a dictionary containing the combined losses
         return {

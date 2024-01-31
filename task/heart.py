@@ -80,7 +80,8 @@ def make_network(configs):
     config = configs['inference']
 
     def calc_loss(*args, **kwargs):
-        return poseNet.calc_loss(*args, **kwargs)
+        loss = poseNet.calc_loss(*args, **kwargs)
+        return {"total_loss": loss}
     
     PoseNet = importNet(configs['network'])
     poseNet = PoseNet(**config)
