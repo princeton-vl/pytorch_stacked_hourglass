@@ -83,6 +83,7 @@ def save_checkpoint(state, is_best, filename='checkpoint.pt'):
         shutil.copyfile(filename, 'model_best.pt')
 
 def save(config):
+    config['inference']['net'].eval()
     # resume = os.path.join('exp', config['opt']['exp'])
     resume = '/content/drive/MyDrive/point_localization/exps'
     if config['opt']['continue_exp'] is not None:  # don't overwrite the original exp I guess ??
