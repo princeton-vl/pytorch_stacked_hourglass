@@ -128,8 +128,8 @@ def train(train_func, config, post_epoch=None):
 
         for phase in ['train', 'valid']:
             # Correct the validation frequency as per your requirement
-            if phase == 'valid' and config['train']['epoch'] % 9 != 0:
-                continue  # Skip validation as per the condition
+            # if phase == 'valid' and config['train']['epoch'] % 1 != 0:
+            #     continue  # Skip validation as per the condition
 
             loader = train_loader if phase == 'train' else valid_loader
             num_step = len(loader)
@@ -142,19 +142,28 @@ def train(train_func, config, post_epoch=None):
                 datas = {'imgs': images, 'heatmaps': heatmaps}
                 train_outputs = train_func(i, config, phase, **datas)
 
-                if config['opt']['use_wandb'] and phase == 'train':
-                    wandb.log({
+                if config['opt']['use_wandb']:
+                    metrics = {
                         "epoch": config['train']['epoch'],
                         "total_loss": train_outputs["total_loss"].item(),
                         "basic_loss": train_outputs["basic_loss"].item(),
                         "focused_loss": train_outputs["focused_loss"].item(),
                         "learning_rate": config['train']['learning_rate'],
                         "batch_size": config['train']['batch_size']
-                    })
+                    }
+                    # Optionally differentiate between training and validation metrics
+                    prefix = f"{phase}_"
+                    wandb.log({prefix + key: value for key, value in metrics.items()})
+            
+            if phase == 'valid':
+                # Calculate average validation loss for the current epoch
+                avg_val_loss = sum([train_outputs["total_loss"].item() for _ in show_range]) / len(show_range)
 
-        # Save model at the end of every epoch
-        print(f"Saving model at the end of epoch {config['train']['epoch']}")
-        save(config)
+                # Update best validation loss and save model conditionally
+                if avg_val_loss < config['train']['best_val_loss']:
+                    config['train']['best_val_loss'] = avg_val_loss
+                    print(f"New best validation loss: {avg_val_loss}. Saving model...")
+                    save(config)  # Save the model as a new best is found
 
         # Increment the epoch counter at the end of each epoch
         config['train']['epoch'] += 1
@@ -169,7 +178,7 @@ def init(opt):
 
     config['opt'] = opt_dict
     config['train']['epoch'] = 0
-    config['train']['lowest_loss'] = float('inf')
+    config['train']['best_val_loss'] = float('inf')
     return task, config
 
 def train_with_wandb(task, config):
