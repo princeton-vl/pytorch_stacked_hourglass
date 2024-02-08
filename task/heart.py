@@ -15,7 +15,7 @@ __config__ = {
     'data_provider': 'data.MPII.dp',
     'network': 'models.posenet.PoseNet',
     'inference': {
-        'nstack': 8,
+        'nstack': 4,
         'inp_dim': 300,
         'oup_dim': 6,
         'num_parts': 6,
@@ -25,7 +25,7 @@ __config__ = {
 
     'train': {
         'epoch_num': 300,
-        'learning_rate': .000002,#02133,
+        'learning_rate': .00002,#02133,
         'batch_size': 4,
         'input_res': 300,
         'output_res': 75,
@@ -131,8 +131,8 @@ def make_network(configs):
             loss_dict = result[-1]
 
             combined_total_loss = loss_dict["combined_total_loss"]
-            combined_basic_loss = loss_dict["combined_basic_loss"]
-            combined_focused_loss = loss_dict["combined_focused_loss"]
+            # combined_basic_loss = loss_dict["combined_basic_loss"]
+            # combined_focused_loss = loss_dict["combined_focused_loss"]
 
             # toprint2 = f"a: {combined_basic_loss}"
             # toprint3 = f"b: {combined_focused_loss}"
@@ -144,8 +144,8 @@ def make_network(configs):
 
             # Aggregate loss across all stacks
             total_loss = combined_total_loss.mean()
-            basic_loss = combined_basic_loss.mean()
-            focused_loss = combined_focused_loss.mean()
+            # basic_loss = combined_basic_loss.mean()
+            # focused_loss = combined_focused_loss.mean()
 
             # Logging
             toprint = f'\n{batch_id}: Total Loss: {total_loss.item():.8f}\n'
@@ -168,8 +168,8 @@ def make_network(configs):
                 for param_group in optimizer.param_groups:
                     param_group['learning_rate'] = config['train']['decay_lr']
             return {"total_loss": total_loss,
-                    "basic_loss": basic_loss,
-                    "focused_loss": focused_loss,
+                    # "basic_loss": basic_loss,
+                    # "focused_loss": focused_loss,
                     "predictions": combined_hm_preds}
 
         else:

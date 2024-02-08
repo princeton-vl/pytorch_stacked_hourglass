@@ -147,8 +147,8 @@ def train(train_func, config, post_epoch=None):
                     metrics = {
                         "epoch": config['train']['epoch'],
                         "total_loss": train_outputs["total_loss"].item(),
-                        "basic_loss": train_outputs["basic_loss"].item(),
-                        "focused_loss": train_outputs["focused_loss"].item(),
+                        # "basic_loss": train_outputs["basic_loss"].item(),
+                        # "focused_loss": train_outputs["focused_loss"].item(),
                         "learning_rate": config['train']['learning_rate'],
                         "batch_size": config['train']['batch_size']
                     }

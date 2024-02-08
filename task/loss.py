@@ -1,7 +1,7 @@
 import torch
 import os
 
-# for a single stack; pred.shape/gt.shape: [4, 6, 75, 75]
+# for a single batch; pred.shape/gt.shape: [bs, 75, 75]
 class HeatmapLoss(torch.nn.Module):
     def __init__(self, extra_weight=0.2):
         super(HeatmapLoss, self).__init__()
