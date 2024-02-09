@@ -25,32 +25,45 @@ class CoordinateDataset(Dataset):
         self.data_frame = pd.read_csv(csv_file, header=0).head(10) if only10 else pd.read_csv(csv_file, header=0)
 
         image_paths = [os.path.join(self.root_dir, img_name) for img_name in self.data_frame.iloc[:, 0]]
-        with Pool(num_workers) as pool:
-            self.images = list(tqdm(pool.imap(Image.open, image_paths), total=len(image_paths)))
+        
+        if self.testing:
+            with Pool(num_workers) as pool:
+                self.images = list(tqdm(pool.imap(Image.open, image_paths), total=len(image_paths)))
+        else:
+            augment_factor = 10
+            self.images_and_heatmaps = []
+            with Pool(num_workers) as pool:
+                for idx, img_path in tqdm(enumerate(image_paths), total=len(image_paths)):
+                    original_image = Image.open(img_path)
+                    points = self.data_frame.iloc[idx, 1:].values.astype('float').reshape(-1, 2)
+                    if self.augment:
+                        for _ in range(augment_factor):
+                            augmented_image, augmented_points = custom_transform(original_image, points)
+                            heatmaps = self.generate_heatmaps(augmented_points, self.output_res)
+                            image_tensor = F.pad(torch.tensor(augmented_image), (0, 1, 0, 1), value=0)
+                            self.images_and_heatmaps.append((image_tensor, heatmaps))
+                    else:
+                        heatmaps = self.generate_heatmaps(points, self.output_res)
+                        image_tensor = F.pad(torch.tensor(original_image), (0, 1, 0, 1), value=0)
+                        self.images_and_heatmaps.append((image_tensor, heatmaps))
 
     def __len__(self):
         return len(self.data_frame)
 
     def __getitem__(self, idx):
-        image = self.images[idx]
-        points = self.data_frame.iloc[idx, 1:].values.astype('float').reshape(-1, 2)
-
-        if self.augment:
-            image, points = custom_transform(image, points)
-
-        image_tensor = transforms.Compose([
-            # transforms.Resize((self.im_sz, self.im_sz)),
-            # transforms.Grayscale(num_output_channels=3),
-            transforms.ToTensor(),
-        ])(image)
-
-        image_tensor = F.pad(image_tensor, (0, 1, 0, 1), value=0)
-
-        heatmaps = self.generate_heatmaps(points, self.output_res)
-
-        if self.testing: return image_tensor, points
-
-        return image_tensor, heatmaps
+        if self.testing:
+            image = self.images[idx]
+            points = self.data_frame.iloc[idx, 1:].values.astype('float').reshape(-1, 2)
+            image_tensor = F.pad(torch.tensor(image), (0, 1, 0, 1), value=0)
+            return image_tensor, points
+        else:
+            image_tensor, heatmaps = self.images_and_heatmaps[idx]
+            return image_tensor, heatmaps
+        # if self.augment:
+        #     image, points = custom_transform(image, points)
+        # heatmaps = self.generate_heatmaps(points, self.output_res)
+        # if self.testing: return image_tensor, points
+        # return image_tensor, heatmaps
 
     def generate_heatmaps(self, points, output_res):
         num_keypoints = len(points)
@@ -59,7 +72,7 @@ class CoordinateDataset(Dataset):
             x, y = int(points[i, 0] * output_res), int(points[i, 1] * output_res)
             if 0 <= x < output_res and 0 <= y < output_res:
                 heatmaps[i, y, x] = 1
-                heatmaps[i] = ndimage.gaussian_filter(heatmaps[i], sigma=1)
+                heatmaps[i] = ndimage.gaussian_filter(heatmaps[i], sigma=.6)
         return torch.tensor(heatmaps, dtype=torch.float32)
 
 def custom_transform(image, points, degree_range=(-15, 15), translate_range=(0.1, 0.1), scale_range=(0.8, 1.2)):
@@ -76,12 +89,15 @@ def custom_transform(image, points, degree_range=(-15, 15), translate_range=(0.1
 
     # Apply rotation matrix to each point individually
     transformed_points = np.zeros_like(points)
-    for i, point in enumerate(points):
-        shifted_point = (point - 0.5) * scale
-        rotated_point = np.dot(shifted_point, rotation_matrix)
-        transformed_points[i] = rotated_point + 0.5 + np.array(translations) / np.array([image.width, image.height])
+
+    shifted_points = (points - 0.5) * scale
+    rotated_points = np.dot(shifted_points, rotation_matrix.T)  # Transpose rotation matrix for correct multiplication
+
+    translation_array = np.array(translations) / np.array([image.width, image.height])
+    transformed_points = rotated_points + 0.5 + translation_array
 
     transformed_points = np.clip(transformed_points, 0, 1)
     transformed_image = transforms.ColorJitter(contrast=(0.8, 1.2))(transformed_image)
+    
 
     return transformed_image, transformed_points

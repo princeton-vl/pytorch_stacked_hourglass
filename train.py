@@ -11,6 +11,7 @@ from pytz import timezone
 import shutil
 import wandb
 import copy
+from time import time
 
 from data.VHS.vhs_loader import CoordinateDataset
 from torch.utils.data import DataLoader
@@ -37,11 +38,11 @@ sweep_config = {
     },
     'parameters': {
         'learning_rate': {
-            'min': 0.00005,
-            'max': 0.001
+            'min': 0.000008,
+            'max': 0.000012
         },
         'batch_size': {
-            'values': [4]
+            'values': [4,8]
         },
         # Add other hyperparameters here
     }
@@ -142,7 +143,6 @@ def train(train_func, config, post_epoch=None):
                 images, heatmaps = next(iter(loader))
                 datas = {'imgs': images, 'heatmaps': heatmaps}
                 train_outputs = train_func(i, config, phase, **datas)
-
                 if config['opt']['use_wandb']:
                     metrics = {
                         "epoch": config['train']['epoch'],
@@ -155,7 +155,7 @@ def train(train_func, config, post_epoch=None):
                     # Optionally differentiate between training and validation metrics
                     prefix = f"{phase}_"
                     wandb.log({prefix + key: value for key, value in metrics.items()})
-            
+                    
             if phase == 'valid':
                 # Calculate average validation loss for the current epoch
                 avg_val_loss = sum([train_outputs["total_loss"].item() for _ in show_range]) / len(show_range)

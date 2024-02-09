@@ -24,12 +24,12 @@ __config__ = {
     },
 
     'train': {
-        'epoch_num': 300,
+        'epoch_num': 11,
         'learning_rate': .00002,#02133,
         'batch_size': 4,
         'input_res': 300,
         'output_res': 75,
-        'train_iters': 1000,
+        'e': 1000,
         'valid_iters': 10,
         'max_num_people' : 1,
         'loss': [
